@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header id="global-header">
+        <div class="header-left">
+            <span class="atom-logo">⚛</span> <span class="brand-text">LifeOS</span>
+        </div>
+        <div class="header-right">
+            <button id="universal-trigger" class="action-anchor">
+                <span class="universe-icon">🌌</span> </button>
+            <button id="hamburger-menu">☰</button>
+        </div>
+    </header>
+
+    <main id="app-viewport">
+        <section id="view-home" class="active-view"></section>
+        <section id="view-taskly" class="hidden-view"></section>
+        <section id="view-boardly" class="hidden-view"></section>
+        <section id="view-timely" class="hidden-view"></section>
+        <section id="view-brainly" class="hidden-view"></section>
+    </main>
+
+    <nav id="tool-navigator" class="dark-triangle">
+        <div class="nav-pills">
+            <button class="nav-pill" data-target="taskly">Taskly</button>
+            <button class="nav-pill" data-target="boardly">Boardly</button>
+            <button class="nav-pill home-icon" data-target="home">🏠</button> <button class="nav-pill" data-target="timely">Timely</button>
+            <button class="nav-pill" data-target="brainly">Brainly</button>
+        </div>
+    </nav>
+
+    <div id="assistant-panel" class="floating-token draggable">
+        <span class="atom-icon">⚛</span> </div>
+
+    <div id="global-trash" class="trash-zone">
+        <span class="trash-icon">🗑️</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
