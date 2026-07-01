@@ -1,0 +1,140 @@
+/* 3.1 Color Palette & Typography [cite: 34, 35, 37] */
+:root {
+    --primary-bg: #FFFFFF;
+    --primary-text: #111111;
+    --accent-muted: #e0e0e0;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: var(--font-stack);
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
+    overflow: hidden; /* Prevent native scroll, controlled internally [cite: 25] */
+}
+
+/* Home Viewport Background [cite: 40, 42, 43] */
+#view-home {
+    background: linear-gradient(180deg, #59b2ec 0%, #aadefa 50%, #eaf6fc 100%);
+    width: 100%;
+    height: 100%;
+}
+
+.hidden-view {
+    display: none !important;
+}
+
+/* Persistent Top Header [cite: 55] */
+#global-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+.atom-logo, .brand-text {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+/* Universal Action Trigger [cite: 60] */
+.action-anchor {
+    background: var(--primary-text);
+    color: var(--primary-bg);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    border: none;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+/* Right-Side Tool Navigator Layout [cite: 68] */
+#tool-navigator {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--primary-bg);
+    border-left: 1px solid var(--accent-muted);
+    border-radius: 20px 0 0 20px;
+    padding: 20px 10px;
+    transition: background 0.3s ease;
+}
+
+.nav-pill {
+    display: block;
+    margin: 15px 0;
+    background: none;
+    border: none;
+    color: gray;
+    font-family: var(--font-stack);
+    cursor: pointer;
+}
+
+/* Hover Interaction States [cite: 72] */
+#tool-navigator:hover {
+    background: #000000;
+}
+
+#tool-navigator:hover .nav-pill {
+    color: #FFFFFF;
+}
+
+/* Card Specifications [cite: 39] */
+.lifeos-card {
+    background: var(--primary-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Soft diffused drop-shadow */
+    border: 1px solid rgba(0,0,0,0.05); /* Low-opacity border */
+    padding: 16px; /* Intentional inner padding metrics */
+}
+
+/* Integrated LifeOS Assistant Panel [cite: 76] */
+#assistant-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 48px;
+    background: var(--primary-text);
+    color: var(--primary-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 200;
+}
+
+/* Global Trash Bin [cite: 64, 65] */
+#global-trash {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    border: 2px dashed var(--accent-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 150;
+    transition: background 0.2s ease;
+}
+
+#global-trash.drag-over {
+    background: rgba(255, 0, 0, 0.1); /* Red highlight mask */
+    border-color: red;
+}
