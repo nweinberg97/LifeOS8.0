@@ -1,46 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- ==========================================================================
+       SYSTEM META & ASSET LOADER
+       ========================================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LifeOS</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header id="global-header">
-        <div class="header-left">
-            <span class="atom-logo">⚛</span> <span class="brand-text">LifeOS</span>
+
+    <!-- ==========================================================================
+       HTML-ZONE-1: TOP NAVIGATION HEADER & DROPDOWN MENU
+       Purpose: Primary system navbar, logo identity, and utility dropdown menu.
+       Bindings: #hamburgerBtn, #dropdownMenu, #btnSync, #btnDownload, #btnClear
+       ========================================================================== -->
+    <header class="navbar">
+        <div class="nav-left">
+            <!-- Top Re-engineered Micro Thin Multi-Ring Atom Logo Container -->
+            <div class="atom-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1">
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <ellipse cx="12" cy="12" rx="9" ry="2.5" transform="rotate(30 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(90 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="7.5" ry="3.5" transform="rotate(150 12 12)"></ellipse>
+                </svg>
+            </div>
+            <span class="brand-name">LifeOS</span>
         </div>
-        <div class="header-right">
-            <button id="universal-trigger" class="action-anchor">
-                <span class="universe-icon">🌌</span> </button>
-            <button id="hamburger-menu">☰</button>
+        <div class="nav-right">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="dropdown-menu" id="dropdownMenu">
+                <button id="btnSync">Sync Devices (Placeholder)</button>
+                <button id="btnDownload">Download Data (JSON)</button>
+                <button id="btnClear" class="danger">Clear Storage</button>
+            </div>
         </div>
     </header>
 
-    <main id="app-viewport">
-        <section id="view-home" class="active-view"></section>
-        <section id="view-taskly" class="hidden-view"></section>
-        <section id="view-boardly" class="hidden-view"></section>
-        <section id="view-timely" class="hidden-view"></section>
-        <section id="view-brainly" class="hidden-view"></section>
+    <!-- ==========================================================================
+       HTML-ZONE-2: FLOATING UNIVERSAL STAGING BOARD TRIGGER & DRAWER
+       Purpose: Global quick-capture inbox and card staging drawer.
+       Bindings: #universalBtn, #universalBoard, #closeUbBtn, #ubDropzone
+       ========================================================================== -->
+    <button class="universal-btn" id="universalBtn" title="Open Universal Board">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+    </button>
+
+    <div class="universal-board" id="universalBoard">
+        <div class="ub-header">
+            <div class="ub-header-left">
+                <h3>Universal Board Inbox</h3>
+                <button class="btn-create-circle" onclick="lifecycle.promptCreateCard('universal-board')" title="Create Universal Card">+</button>
+            </div>
+            <button id="closeUbBtn">&times;</button>
+        </div>
+        <div class="ub-dropzone dropzone" id="ubDropzone" data-container="universal-board"></div>
+    </div>
+
+    <!-- ==========================================================================
+       HTML-ZONE-3: MAIN VIEW CONTAINER & MODULE VIEWS
+       ========================================================================== -->
+    <main class="app-container" id="appContainer">
+        
+        <!-- ----------------------------------------------------------------------
+           HTML-ZONE-3A: HOME MODULE VIEW
+           Purpose: Morning sky dashboard, hero clock, date, weather, and activity overview.
+           Bindings: #view-home, #clock, #date, #weather, #homeNextUp, #homeRecentActivity
+           ---------------------------------------------------------------------- -->
+        <section class="view active" id="view-home">
+            <div class="hero-section">
+                <div class="clock-display" id="clock">00:00:00</div>
+                <div class="date-display" id="date">Wednesday, June 24, 2026</div>
+                <div class="weather-display" id="weather">☀️ 24°C Sunny</div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="dash-col">
+                    <h3>Next Up</h3>
+                    <div class="dash-card-list" id="homeNextUp"></div>
+                </div>
+                <div class="dash-col">
+                    <h3>Recent Activity</h3>
+                    <div class="dash-card-list" id="homeRecentActivity"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ----------------------------------------------------------------------
+           HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW
+           Purpose: Multi-stage task management board across 5 pipeline columns.
+           Bindings: #view-taskly, dropzones: taskly-todo, taskly-inprogress, 
+                     taskly-review, taskly-completed, taskly-backlog
+           ---------------------------------------------------------------------- -->
+        <section class="view" id="view-taskly">
+            <div class="view-header">
+                <h2>Taskly</h2>
+                <button class="btn-action" onclick="lifecycle.promptCreateCard('taskly', 'To Do')">+ Add Task</button>
+            </div>
+            <div class="kanban-board">
+                <div class="kanban-col">
+                    <div class="col-header">To Do</div>
+                    <div class="col-body dropzone" data-container="taskly-todo"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-header">In Progress</div>
+                    <div class="col-body dropzone" data-container="taskly-inprogress"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-header">Review</div>
+                    <div class="col-body dropzone" data-container="taskly-review"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-header">Completed</div>
+                    <div class="col-body dropzone" data-container="taskly-completed"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="col-header">Backlog</div>
+                    <div class="col-body dropzone" data-container="taskly-backlog"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ----------------------------------------------------------------------
+           HTML-ZONE-3C: BOARDLY CATEGORY CANVAS MODULE VIEW
+           Purpose: Categorized tabbed workspace with goals, tasks, and notes grid.
+           Bindings: #view-boardly, #addBoardlyTabBtn, #boardlyTabsBar, #boardlyGrid
+           ---------------------------------------------------------------------- -->
+        <section class="view" id="view-boardly">
+            <div class="view-header">
+                <h2>Boardly</h2>
+                <button class="btn-action" id="addBoardlyTabBtn">+ New Category Tab</button>
+            </div>
+            <div class="boardly-tabs-bar" id="boardlyTabsBar"></div>
+            <div class="boardly-workspace">
+                <div class="boardly-actions">
+                    <button class="btn-action" onclick="lifecycle.promptCreateCard('boardly', null, 'goal')">🎯 + Goal</button>
+                    <button class="btn-action" onclick="lifecycle.promptCreateCard('boardly', null, 'task')">✅ + Task</button>
+                    <button class="btn-action" onclick="lifecycle.promptCreateCard('boardly', null, 'note')">📝 + Note</button>
+                </div>
+                <div class="boardly-grid dropzone" id="boardlyGrid" data-container="boardly-active-tab"></div>
+            </div>
+        </section>
+
+        <!-- ----------------------------------------------------------------------
+           HTML-ZONE-3D: TIMELY SCHEDULING & PLANNING MODULE VIEW
+           Purpose: Time-based organization with dual Scheduling/Planning modes.
+           Bindings: #view-timely, #timelyModeSched, #timelyModePlan, 
+                     #timelySchedulingContent, #timelyPlanningContent, 
+                     #timelySchedZone, #timelyPlanZone
+           ---------------------------------------------------------------------- -->
+        <section class="view" id="view-timely">
+            <div class="view-header">
+                <div class="header-title-wrapper">
+                    <h2>Timely</h2>
+                    <button class="btn-create-circle" onclick="lifecycle.promptCreateCard('timely-sched')" title="Create Timely Item">+</button>
+                </div>
+                <div class="toggle-switch">
+                    <button class="toggle-btn active" id="timelyModeSched">Scheduling</button>
+                    <button class="toggle-btn" id="timelyModePlan">Planning</button>
+                </div>
+            </div>
+
+            <div id="timelySchedulingContent">
+                <div class="sub-tabs">
+                    <button class="sub-tab active" data-sub="daily">Daily</button>
+                    <button class="sub-tab" data-sub="weekly">Weekly</button>
+                    <button class="sub-tab" data-sub="monthly">Monthly</button>
+                    <button class="sub-tab" data-sub="reminders">Reminders</button>
+                </div>
+                <div class="timely-container panel-card dropzone" id="timelySchedZone" data-container="timely-sched"></div>
+            </div>
+
+            <div id="timelyPlanningContent" class="hidden">
+                <div class="sub-tabs">
+                    <button class="sub-tab active" data-sub="projects">Projects</button>
+                    <button class="sub-tab" data-sub="goals">Goals Matrix</button>
+                </div>
+                <div class="timely-container panel-card dropzone" id="timelyPlanZone" data-container="timely-plan"></div>
+            </div>
+        </section>
+
+        <!-- ----------------------------------------------------------------------
+           HTML-ZONE-3E: BRAINLY KNOWLEDGE BASE MODULE VIEW
+           Purpose: Knowledge hub, Google Drive links, folder hierarchy, and notes storage.
+           Bindings: #view-brainly, #brainlySearch, #brainlyNewNoteBtn, #brainlyNewFolderBtn,
+                     #myLinksBox, #linkInput, #linksList, #foldersList, #brainlyMainZone
+           ---------------------------------------------------------------------- -->
+        <section class="view" id="view-brainly">
+            <div class="view-header">
+                <h2>Brainly</h2>
+                <div class="brainly-top-center">
+                    <input type="text" id="brainlySearch" placeholder="🔍 Search notes, folders, and links...">
+                </div>
+                <div class="brainly-actions">
+                    <button class="btn-action" id="brainlyNewNoteBtn">📝 New Note</button>
+                    <button class="btn-action" id="brainlyNewFolderBtn">📁 New Folder</button>
+                </div>
+            </div>
+            
+            <div class="brainly-layout">
+                <div class="brainly-sidebar">
+                    <div class="my-links-box" id="myLinksBox">
+                        <h4>My Links (Google Drive Connect)</h4>
+                        <input type="text" id="linkInput" placeholder="Paste URL & press Enter...">
+                        <ul class="links-list" id="linksList"></ul>
+                    </div>
+                    <div class="folders-box">
+                        <h4>Folders</h4>
+                        <div id="foldersList"></div>
+                    </div>
+                </div>
+                <div class="brainly-main dropzone" id="brainlyMainZone" data-container="brainly-notes"></div>
+            </div>
+        </section>
+
     </main>
 
-    <nav id="tool-navigator" class="dark-triangle">
-        <div class="nav-pills">
-            <button class="nav-pill" data-target="taskly">Taskly</button>
-            <button class="nav-pill" data-target="boardly">Boardly</button>
-            <button class="nav-pill home-icon" data-target="home">🏠</button> <button class="nav-pill" data-target="timely">Timely</button>
-            <button class="nav-pill" data-target="brainly">Brainly</button>
+    <!-- ==========================================================================
+       HTML-ZONE-4: COLLAPSIBLE SIDE NAVIGATOR
+       Purpose: Primary navigation pill-bar for switching app views.
+       Bindings: #sideNavigator, #navToggleTrigger, buttons with data-target
+       ========================================================================== -->
+    <nav class="side-navigator" id="sideNavigator">
+        <button class="nav-toggle-trigger" id="navToggleTrigger" aria-label="Toggle Navigation">
+            <div class="triangle-pointer"></div>
+        </button>
+        <div class="nav-pills-wrapper">
+            <button class="pill-btn" data-target="view-taskly">Taskly</button>
+            <button class="pill-btn" data-target="view-boardly">Boardly</button>
+            <button class="pill-btn active" data-target="view-home"><span>🏠</span> Home</button>
+            <button class="pill-btn" data-target="view-timely">Timely</button>
+            <button class="pill-btn" data-target="view-brainly">Brainly</button>
         </div>
     </nav>
 
-    <div id="assistant-panel" class="floating-token draggable">
-        <span class="atom-icon">⚛</span> </div>
+    <!-- ==========================================================================
+       HTML-ZONE-5: GLOBAL DRAG-AND-DROP TRASH BIN
+       Purpose: Drop target for card deletion across all views.
+       Bindings: #globalTrashBin
+       ========================================================================== -->
+    <div class="global-trash-bin" id="globalTrashBin">
+        <div class="trash-icon">🗑️</div>
+    </div>
 
-    <div id="global-trash" class="trash-zone">
-        <span class="trash-icon">🗑️</span>
+    <!-- ==========================================================================
+       HTML-ZONE-6: LIFEOS INTELLIGENCE ENGINE / VOICE ASSISTANT
+       Purpose: Floating AI assistant panel with text input, voice controls, and status output.
+       Bindings: #lifeosAssistant, #assistantTrigger, #assistantPanel, #assistantOutput,
+                 #assistantInput, #assistantVoiceBtn, #assistantSubmit
+       ========================================================================== -->
+    <div class="lifeos-assistant" id="lifeosAssistant">
+        <!-- Bottom Balanced Assistant Trigger containing the matching rotating vector system -->
+        <button class="assistant-trigger" id="assistantTrigger" title="Toggle Assistant Panel">
+            <div class="atom-logo">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1">
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <ellipse cx="12" cy="12" rx="9" ry="2.5" transform="rotate(30 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(90 12 12)"></ellipse>
+                    <ellipse cx="12" cy="12" rx="7.5" ry="3.5" transform="rotate(150 12 12)"></ellipse>
+                </svg>
+            </div>
+        </button>
+        <div class="assistant-panel" id="assistantPanel">
+            <div class="assistant-header">
+                <span>LifeOS Intelligence Engine</span>
+            </div>
+            <div class="assistant-body" id="assistantOutput">
+                <p class="system-msg">System initialized. Ready for context routing, voice synthesis, or command parse execution.</p>
+            </div>
+            <!-- Unified Inline Textarea Bar Footer -->
+            <div class="assistant-footer">
+                <input type="text" id="assistantInput" placeholder="Ask AI engine or type system action...">
+                <!-- Inline Voice Toggle Icon Button -->
+                <button class="assistant-icon-btn voice-btn" id="assistantVoiceBtn" title="Toggle Voice Stream Mode">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                    </svg>
+                </button>
+                <!-- Inline Submit Command Icon Button -->
+                <button class="assistant-icon-btn submit-btn" id="assistantSubmit" title="Execute Pipeline">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       HTML-ZONE-7: ITEM CARD DETAIL MODAL
+       Purpose: Global modal overlay for editing title and description of any card item.
+       Bindings: #cardModal, #modalCardTitle, #modalCardDesc, #modalCardId,
+                 #modalCloseBtn, #modalSaveBtn
+       ========================================================================== -->
+    <div class="modal-overlay" id="cardModal">
+        <div class="modal-content">
+            <h3>Modify Item Elements</h3>
+            <input type="text" id="modalCardTitle" placeholder="Title">
+            <textarea id="modalCardDesc" rows="4" placeholder="Description / Markdown Segment"></textarea>
+            <input type="hidden" id="modalCardId">
+            <div class="modal-actions">
+                <button class="btn-action secondary" id="modalCloseBtn">Cancel</button>
+                <button class="btn-action" id="modalSaveBtn">Save Modifications</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
