@@ -208,8 +208,9 @@ const lifecycle = {
     },
 
 // ==========================================================================
-// JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE (RATE-LIMIT PROOF)
-// Purpose: Handles live time, dynamic calendar date/day, cached weather, and view switching.
+// JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE
+// Purpose: Handles live time, dynamic calendar date, rate-limit-proof weather,
+//          and view switching.
 // ==========================================================================
     initClock() {
         const updateClockAndCalendar = () => {
@@ -229,14 +230,14 @@ const lifecycle = {
             }
         };
 
-        // Initialize immediately and refresh every second
+        // Initialize clock immediately and refresh every second
         setInterval(updateClockAndCalendar, 1000);
         updateClockAndCalendar();
 
-        // 3. Auto-Updating Weather Engine (Cached to prevent rate-limit errors)
+        // 3. Rate-Limit-Proof Weather Engine (Uses localStorage caching)
         this.fetchLocalWeather();
-        // Check for updates every 30 minutes
-        setInterval(() => this.fetchLocalWeather(), 30 * 60 * 1000);
+        // Check cache / refresh every 15 minutes
+        setInterval(() => this.fetchLocalWeather(), 15 * 60 * 1000);
     },
 
     async fetchLocalWeather() {
@@ -244,43 +245,113 @@ const lifecycle = {
         if (!weatherNode) return;
 
         const CACHE_KEY = 'sedi_weather_cache';
-        const THIRTY_MINUTES = 30 * 60 * 1000;
+        const FIFTEEN_MINUTES = 15 * 60 * 1000;
 
-        // Step 1: Read existing cache
+        // Step 1: Read Cache for Instant Loading (Zero API calls on refresh)
         const cachedData = localStorage.getItem(CACHE_KEY);
         let parsedCache = null;
 
         if (cachedData) {
             try {
                 parsedCache = JSON.parse(cachedData);
-                const isFresh = (Date.now() - parsedCache.timestamp) < THIRTY_MINUTES;
+                const isFresh = (Date.now() - parsedCache.timestamp) < FIFTEEN_MINUTES;
 
-                // Show cached string right away
+                // Always display cached value immediately
                 weatherNode.textContent = parsedCache.text;
 
-                // If cache is fresh, stop here — ZERO network requests made!
+                // Stop here if cache is fresh — no network requests made!
                 if (isFresh) return;
             } catch (e) {
                 localStorage.removeItem(CACHE_KEY);
             }
         }
 
-        // Step 2: Fetch fresh data only if cache is missing or older than 30 minutes
-        try {
-            const locRes = await fetch('https://ipapi.co/json/');
-            if (!locRes.ok) throw new Error("Location resolution failed");
-            const locData = await locRes.json();
-            const { latitude, longitude, city } = locData;
+        // Step 2: Determine Coordinates (GPS -> Saved Override -> IP Lookup)
+        let coords = null;
 
+        // A. Native Device Geolocation (Vacation-aware, VPN-proof, zero rate limits)
+        if (navigator.geolocation) {
+            coords = await new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+                    () => resolve(null),
+                    { timeout: 4000 }
+                );
+            });
+        }
+
+        // B. Check Backlogged Manual City Setting Override (from localStorage)
+        if (!coords) {
+            const savedCity = localStorage.getItem('sedi_preferred_city');
+            if (savedCity) {
+                try {
+                    const geoRes = await fetch(
+                        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(savedCity)}&count=1`
+                    );
+                    if (geoRes.ok) {
+                        const geoData = await geoRes.json();
+                        if (geoData.results && geoData.results[0]) {
+                            coords = {
+                                lat: geoData.results[0].latitude,
+                                lon: geoData.results[0].longitude,
+                                city: geoData.results[0].name
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Geocoding saved city failed:", e);
+                }
+            }
+        }
+
+        // C. Network IP Lookup (Fallback if no GPS and no saved city)
+        if (!coords) {
+            try {
+                const ipRes = await fetch('https://ipapi.co/json/');
+                if (ipRes.ok) {
+                    const ipData = await ipRes.json();
+                    if (ipData.latitude && ipData.longitude) {
+                        coords = { lat: ipData.latitude, lon: ipData.longitude, city: ipData.city };
+                    }
+                }
+            } catch (e) {
+                console.warn("IP lookup skipped or rate-limited");
+            }
+        }
+
+        // D. Default Coordinates Fallback (Vancouver)
+        if (!coords) {
+            coords = { lat: 49.2827, lon: -123.1207, city: "Vancouver" };
+        }
+
+        // Step 3: Fetch Weather from Open-Meteo
+        try {
             const weatherRes = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+                `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current_weather=true`
             );
             if (!weatherRes.ok) throw new Error("Weather fetch failed");
             const weatherData = await weatherRes.json();
             
             const temp = Math.round(weatherData.current_weather.temperature);
             const code = weatherData.current_weather.weathercode;
-            
+
+            let cityName = coords.city;
+            if (!cityName) {
+                try {
+                    const reverseRes = await fetch(
+                        `https://geocoding-api.open-meteo.com/v1/search?name=${coords.lat},${coords.lon}`
+                    );
+                    if (reverseRes.ok) {
+                        const revData = await reverseRes.json();
+                        if (revData.results && revData.results[0]) {
+                            cityName = revData.results[0].name;
+                        }
+                    }
+                } catch (e) {
+                    cityName = "Local";
+                }
+            }
+
             const weatherMap = {
                 0: { emoji: "☀️", desc: "Clear" },
                 1: { emoji: "🌤️", desc: "Mostly Clear" },
@@ -296,9 +367,9 @@ const lifecycle = {
             };
 
             const info = weatherMap[code] || { emoji: "🌡️", desc: "Weather" };
-            const formattedText = `${info.emoji} ${temp}°C ${info.desc} (${city})`;
+            const formattedText = `${info.emoji} ${temp}°C ${info.desc} (${cityName || 'Local'})`;
 
-            // Update UI & save to localStorage
+            // Update UI & save to LocalStorage
             weatherNode.textContent = formattedText;
             localStorage.setItem(CACHE_KEY, JSON.stringify({
                 timestamp: Date.now(),
@@ -306,8 +377,7 @@ const lifecycle = {
             }));
 
         } catch (err) {
-            console.warn("Weather sync deferred or rate-limited:", err);
-            // If network fails, retain the last valid cached string if available
+            console.warn("Weather sync error:", err);
             if (parsedCache && parsedCache.text) {
                 weatherNode.textContent = parsedCache.text;
             } else {
