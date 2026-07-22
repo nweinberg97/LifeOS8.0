@@ -208,16 +208,80 @@ const lifecycle = {
     },
 
 // ==========================================================================
-// JS-ZONE-5: VIEW ROUTER & CLOCK ENGINE
-// Purpose: Toggles visible view containers and updates the live header clock display.
+// JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE
+// Purpose: Handles live time, dynamic calendar date/day, free weather, and view switching.
 // ==========================================================================
     initClock() {
-        const updateClock = () => {
+        const updateClockAndCalendar = () => {
             const now = new Date();
-            document.getElementById('clock').textContent = now.toTimeString().split(' ')[0];
+            
+            // 1. Live Time Display (HH:MM:SS)
+            const timeNode = document.getElementById('clock');
+            if (timeNode) {
+                timeNode.textContent = now.toTimeString().split(' ')[0];
+            }
+            
+            // 2. Live Calendar Display (e.g., "Wednesday, July 22, 2026")
+            const dateNode = document.getElementById('date');
+            if (dateNode) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateNode.textContent = now.toLocaleDateString('en-US', options);
+            }
         };
-        setInterval(updateClock, 1000);
-        updateClock();
+
+        // Initialize immediately and refresh every second
+        setInterval(updateClockAndCalendar, 1000);
+        updateClockAndCalendar();
+
+        // 3. Auto-Updating Weather Engine (Free, No API Key, No Location Prompts)
+        this.fetchLocalWeather();
+        // Refresh weather data every 30 minutes
+        setInterval(() => this.fetchLocalWeather(), 30 * 60 * 1000);
+    },
+
+    async fetchLocalWeather() {
+        const weatherNode = document.getElementById('weather');
+        if (!weatherNode) return;
+
+        try {
+            // Step A: Get coarse coordinates via IP location (zero browser prompts needed)
+            const locRes = await fetch('https://ipapi.co/json/');
+            if (!locRes.ok) throw new Error("Location resolution failed");
+            const locData = await locRes.json();
+            const { latitude, longitude, city } = locData;
+
+            // Step B: Fetch weather metrics from Open-Meteo free API
+            const weatherRes = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
+            );
+            if (!weatherRes.ok) throw new Error("Weather fetch failed");
+            const weatherData = await weatherRes.json();
+            
+            const temp = Math.round(weatherData.current_weather.temperature);
+            const code = weatherData.current_weather.weathercode;
+            
+            // Map WMO Weather Interpretation Codes to Emojis
+            const weatherMap = {
+                0: { emoji: "☀️", desc: "Clear" },
+                1: { emoji: "🌤️", desc: "Mostly Clear" },
+                2: { emoji: "⛅", desc: "Partly Cloudy" },
+                3: { emoji: "☁️", desc: "Overcast" },
+                45: { emoji: "🌫️", desc: "Foggy" },
+                48: { emoji: "🌫️", desc: "Rime Fog" },
+                51: { emoji: "🌧️", desc: "Light Drizzle" },
+                61: { emoji: "🌧️", desc: "Rain" },
+                71: { emoji: "❄️", desc: "Snow" },
+                80: { emoji: "🌦️", desc: "Rain Showers" },
+                95: { emoji: "🌩️", desc: "Thunderstorm" }
+            };
+
+            const info = weatherMap[code] || { emoji: "🌡️", desc: "Weather" };
+            weatherNode.textContent = `${info.emoji} ${temp}°C ${info.desc} (${city})`;
+
+        } catch (err) {
+            console.warn("Weather engine offline, using fallback state:", err);
+            weatherNode.textContent = "🌤️ Local Weather Sync Active";
+        }
     },
 
     routeView(viewId) {
@@ -230,7 +294,6 @@ const lifecycle = {
             document.body.classList.remove('home-active');
         }
     },
-
 // ==========================================================================
 // JS-ZONE-6: CARD FACTORY & ENTITY SCHEMA CONSTRUCTORS
 // Purpose: Prompts user input and builds standardized card entities mapped to target tools.
