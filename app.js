@@ -208,8 +208,8 @@ const lifecycle = {
     },
 
 // ==========================================================================
-// JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE
-// Purpose: Handles live time, dynamic calendar date/day, free weather, and view switching.
+// JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE (RATE-LIMIT PROOF)
+// Purpose: Handles live time, dynamic calendar date/day, cached weather, and view switching.
 // ==========================================================================
     initClock() {
         const updateClockAndCalendar = () => {
@@ -233,9 +233,9 @@ const lifecycle = {
         setInterval(updateClockAndCalendar, 1000);
         updateClockAndCalendar();
 
-        // 3. Auto-Updating Weather Engine (Free, No API Key, No Location Prompts)
+        // 3. Auto-Updating Weather Engine (Cached to prevent rate-limit errors)
         this.fetchLocalWeather();
-        // Refresh weather data every 30 minutes
+        // Check for updates every 30 minutes
         setInterval(() => this.fetchLocalWeather(), 30 * 60 * 1000);
     },
 
@@ -243,14 +243,35 @@ const lifecycle = {
         const weatherNode = document.getElementById('weather');
         if (!weatherNode) return;
 
+        const CACHE_KEY = 'sedi_weather_cache';
+        const THIRTY_MINUTES = 30 * 60 * 1000;
+
+        // Step 1: Read existing cache
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        let parsedCache = null;
+
+        if (cachedData) {
+            try {
+                parsedCache = JSON.parse(cachedData);
+                const isFresh = (Date.now() - parsedCache.timestamp) < THIRTY_MINUTES;
+
+                // Show cached string right away
+                weatherNode.textContent = parsedCache.text;
+
+                // If cache is fresh, stop here — ZERO network requests made!
+                if (isFresh) return;
+            } catch (e) {
+                localStorage.removeItem(CACHE_KEY);
+            }
+        }
+
+        // Step 2: Fetch fresh data only if cache is missing or older than 30 minutes
         try {
-            // Step A: Get coarse coordinates via IP location (zero browser prompts needed)
             const locRes = await fetch('https://ipapi.co/json/');
             if (!locRes.ok) throw new Error("Location resolution failed");
             const locData = await locRes.json();
             const { latitude, longitude, city } = locData;
 
-            // Step B: Fetch weather metrics from Open-Meteo free API
             const weatherRes = await fetch(
                 `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`
             );
@@ -260,7 +281,6 @@ const lifecycle = {
             const temp = Math.round(weatherData.current_weather.temperature);
             const code = weatherData.current_weather.weathercode;
             
-            // Map WMO Weather Interpretation Codes to Emojis
             const weatherMap = {
                 0: { emoji: "☀️", desc: "Clear" },
                 1: { emoji: "🌤️", desc: "Mostly Clear" },
@@ -276,11 +296,23 @@ const lifecycle = {
             };
 
             const info = weatherMap[code] || { emoji: "🌡️", desc: "Weather" };
-            weatherNode.textContent = `${info.emoji} ${temp}°C ${info.desc} (${city})`;
+            const formattedText = `${info.emoji} ${temp}°C ${info.desc} (${city})`;
+
+            // Update UI & save to localStorage
+            weatherNode.textContent = formattedText;
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                timestamp: Date.now(),
+                text: formattedText
+            }));
 
         } catch (err) {
-            console.warn("Weather engine offline, using fallback state:", err);
-            weatherNode.textContent = "🌤️ Local Weather Sync Active";
+            console.warn("Weather sync deferred or rate-limited:", err);
+            // If network fails, retain the last valid cached string if available
+            if (parsedCache && parsedCache.text) {
+                weatherNode.textContent = parsedCache.text;
+            } else {
+                weatherNode.textContent = "🌤️ Local Weather Sync Active";
+            }
         }
     },
 
