@@ -100,10 +100,7 @@ const lifecycle = {
         this.initClock();
         this.setupGlobalDragAndDrop();
         this.renderAll();
-        
-        // Restore saved active view or default to home
-        const savedView = localStorage.getItem('lifeos_active_view') || "view-home";
-        this.routeView(savedView);
+        this.routeView("view-home");
     },
 
     bindEvents() {
@@ -209,7 +206,7 @@ const lifecycle = {
         });
         document.getElementById('modalSaveBtn').addEventListener('click', () => this.saveModalCard());
     },
-    
+
 // ==========================================================================
 // JS-ZONE-5: VIEW ROUTER, CLOCK & LIVE WEATHER ENGINE
 // Purpose: Handles live time, dynamic calendar date, rate-limit-proof weather,
@@ -513,79 +510,23 @@ const lifecycle = {
         dynamicRecent.forEach(c => recent.appendChild(this.createCardDOM(c)));
     },
 
-   // ----------------------------------------------------------------------
-// JS-ZONE-8C: TASKLY KANBAN ENGINE
-// Purpose: Distributes cards across 5 Taskly columns & updates metadata.
-// ----------------------------------------------------------------------
-renderTaskly() {
-    const columns = ['backlog', 'todo', 'inprogress', 'review', 'completed'];
-
-    columns.forEach(col => {
-        const containerKey = `taskly-${col}`;
-        const containerNode = document.querySelector(`[data-container="${containerKey}"]`);
-        const countNode = document.getElementById(`count-${containerKey}`);
-
-        if (containerNode) {
-            // Clear current column cards
-            containerNode.innerHTML = '';
-
-            // Filter cards matching this exact column
-            const columnCards = state.cards.filter(c => c.container === containerKey);
-
-            // Update column counter badge if present
-            if (countNode) {
-                countNode.textContent = columnCards.length;
+    // ----------------------------------------------------------------------
+    // JS-ZONE-8C: TASKLY KANBAN ENGINE
+    // Purpose: Distributes cards across the 5 Taskly kanban columns.
+    // ----------------------------------------------------------------------
+    renderTaskly() {
+        const columns = ['todo', 'inprogress', 'review', 'completed', 'backlog'];
+        columns.forEach(col => {
+            const containerNode = document.querySelector(`[data-container="taskly-${col}"]`);
+            if (containerNode) {
+                containerNode.innerHTML = '';
+                state.cards.filter(c => c.container === `taskly-${col}`).forEach(c => {
+                    containerNode.appendChild(this.createCardDOM(c));
+                });
             }
+        });
+    },
 
-            // Render matching card DOM nodes
-            columnCards.forEach(c => {
-                const cardEl = this.createCardDOM(c);
-                cardEl.setAttribute('draggable', 'true');
-                
-                // Attach drag events to card
-                cardEl.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', c.id);
-                    cardEl.classList.add('dragging');
-                });
-
-                cardEl.addEventListener('dragend', () => {
-                    cardEl.classList.remove('dragging');
-                });
-
-                containerNode.appendChild(cardEl);
-            });
-
-            // Bind column dropzone listeners for horizontal/vertical movement
-            this.bindDropzoneEvents(containerNode, containerKey);
-        }
-    });
-},
-
-bindDropzoneEvents(containerNode, containerKey) {
-    containerNode.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        containerNode.classList.add('drag-hover');
-    });
-
-    containerNode.addEventListener('dragleave', () => {
-        containerNode.classList.remove('drag-hover');
-    });
-
-    containerNode.addEventListener('drop', (e) => {
-        e.preventDefault();
-        containerNode.classList.remove('drag-hover');
-        
-        const cardId = e.dataTransfer.getData('text/plain');
-        const card = state.cards.find(c => c.id === cardId);
-
-        if (card && card.container !== containerKey) {
-            card.container = containerKey; // Move card to new column in state
-            this.syncStorage();            // Persist changes
-            this.renderTaskly();           // Re-render board
-        }
-    });
-}
-    
     // ----------------------------------------------------------------------
     // JS-ZONE-8D: BOARDLY TABBED WORKSPACE ENGINE
     // Purpose: Renders dynamic category tabs and filters cards for active workspace tab.
