@@ -96,41 +96,54 @@
             </div>
         </section>
 
-        <!-- ----------------------------------------------------------------------
-           HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW
-           Purpose: Multi-stage task management board across 5 pipeline columns.
-           Bindings: #view-taskly, dropzones: taskly-todo, taskly-inprogress, 
-                     taskly-review, taskly-completed, taskly-backlog
-           ---------------------------------------------------------------------- -->
-        <section class="view" id="view-taskly">
-            <div class="view-header">
-                <h2>Taskly</h2>
-                <button class="btn-action" onclick="lifecycle.promptCreateCard('taskly', 'To Do')">+ Add Task</button>
-            </div>
-            <div class="kanban-board">
-                <div class="kanban-col">
-                    <div class="col-header">To Do</div>
-                    <div class="col-body dropzone" data-container="taskly-todo"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-header">In Progress</div>
-                    <div class="col-body dropzone" data-container="taskly-inprogress"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-header">Review</div>
-                    <div class="col-body dropzone" data-container="taskly-review"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-header">Completed</div>
-                    <div class="col-body dropzone" data-container="taskly-completed"></div>
-                </div>
-                <div class="kanban-col">
-                    <div class="col-header">Backlog</div>
-                    <div class="col-body dropzone" data-container="taskly-backlog"></div>
-                </div>
-            </div>
-        </section>
+      <!-- ----------------------------------------------------------------------
+   HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW
+   Purpose: Multi-stage task management board across 5 pipeline columns.
+   Bindings: #view-taskly, dropzones: taskly-todo, taskly-inprogress, 
+             taskly-review, taskly-completed, taskly-backlog
+   ---------------------------------------------------------------------- -->
+<section class="view" id="view-taskly">
+    <div class="view-header">
+        <h2>Taskly</h2>
+        <!-- Old single header button REMOVED from here -->
+    </div>
+    <div class="kanban-board">
+        <!-- 1. To Do -->
+        <div class="kanban-col">
+            <div class="col-header">To Do</div>
+            <div class="col-body dropzone" data-container="taskly-todo"></div>
+            <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-todo')">+ Add Task</button>
+        </div>
 
+        <!-- 2. In Progress -->
+        <div class="kanban-col">
+            <div class="col-header">In Progress</div>
+            <div class="col-body dropzone" data-container="taskly-inprogress"></div>
+            <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-inprogress')">+ Add Task</button>
+        </div>
+
+        <!-- 3. Review -->
+        <div class="kanban-col">
+            <div class="col-header">Review</div>
+            <div class="col-body dropzone" data-container="taskly-review"></div>
+            <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-review')">+ Add Task</button>
+        </div>
+
+        <!-- 4. Completed -->
+        <div class="kanban-col">
+            <div class="col-header">Completed</div>
+            <div class="col-body dropzone" data-container="taskly-completed"></div>
+            <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-completed')">+ Add Task</button>
+        </div>
+
+        <!-- 5. Backlog -->
+        <div class="kanban-col">
+            <div class="col-header">Backlog</div>
+            <div class="col-body dropzone" data-container="taskly-backlog"></div>
+            <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-backlog')">+ Add Task</button>
+        </div>
+    </div>
+</section>
         <!-- ----------------------------------------------------------------------
            HTML-ZONE-3C: BOARDLY CATEGORY CANVAS MODULE VIEW
            Purpose: Categorized tabbed workspace with goals, tasks, and notes grid.
