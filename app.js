@@ -101,38 +101,41 @@ const lifecycle = {
         this.setupGlobalDragAndDrop();
         this.renderAll();
         
-        // Restore saved active view or default to home
+        // Restore saved active view or fallback to home
         const savedView = localStorage.getItem('lifeos_active_view') || "view-home";
         this.routeView(savedView);
     },
 
     bindEvents() {
         // Dropdown Navigation Core Controls (HTML-ZONE-1)
-        document.getElementById('hamburgerBtn').addEventListener('click', () => {
-            document.getElementById('dropdownMenu').classList.toggle('open');
-        });
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', () => {
+                document.getElementById('dropdownMenu')?.classList.toggle('open');
+            });
+        }
         
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.nav-right')) {
-                document.getElementById('dropdownMenu').classList.remove('open');
+                document.getElementById('dropdownMenu')?.classList.remove('open');
             }
         });
 
-        document.getElementById('btnDownload').addEventListener('click', () => this.exportData());
-        document.getElementById('btnClear').addEventListener('click', () => this.clearStorage());
+        document.getElementById('btnDownload')?.addEventListener('click', () => this.exportData());
+        document.getElementById('btnClear')?.addEventListener('click', () => this.clearStorage());
 
         // Universal Board Switch Trigger (HTML-ZONE-2)
-        document.getElementById('universalBtn').addEventListener('click', () => {
-            document.getElementById('universalBoard').classList.toggle('open');
+        document.getElementById('universalBtn')?.addEventListener('click', () => {
+            document.getElementById('universalBoard')?.classList.toggle('open');
         });
-        document.getElementById('closeUbBtn').addEventListener('click', () => {
-            document.getElementById('universalBoard').classList.remove('open');
+        document.getElementById('closeUbBtn')?.addEventListener('click', () => {
+            document.getElementById('universalBoard')?.classList.remove('open');
         });
 
         // Navigator View Control Loops (HTML-ZONE-4)
-        document.getElementById('navToggleTrigger').addEventListener('click', () => {
-            document.getElementById('sideNavigator').classList.toggle('open');
+        document.getElementById('navToggleTrigger')?.addEventListener('click', () => {
+            document.getElementById('sideNavigator')?.classList.toggle('open');
         });
         
         document.querySelectorAll('.pill-btn').forEach(btn => {
@@ -140,13 +143,11 @@ const lifecycle = {
                 const targetBtn = e.target.closest('.pill-btn');
                 const targetView = targetBtn.getAttribute('data-target');
                 this.routeView(targetView);
-                document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-                targetBtn.classList.add('active');
             });
         });
 
         // Boardly Tab Creation Operations (HTML-ZONE-3C)
-        document.getElementById('addBoardlyTabBtn').addEventListener('click', () => {
+        document.getElementById('addBoardlyTabBtn')?.addEventListener('click', () => {
             const name = prompt("Enter new board category name (Max 10 categories):");
             if (name && name.trim() !== "" && state.boardlyTabs.length < 10) {
                 state.boardlyTabs.push(name.trim());
@@ -156,23 +157,25 @@ const lifecycle = {
         });
 
         // Timely Core Layout Mode Switches (HTML-ZONE-3D)
-        document.getElementById('timelyModeSched').addEventListener('click', () => this.setTimelyMode('scheduling'));
-        document.getElementById('timelyModePlan').addEventListener('click', () => this.setTimelyMode('planning'));
+        document.getElementById('timelyModeSched')?.addEventListener('click', () => this.setTimelyMode('scheduling'));
+        document.getElementById('timelyModePlan')?.addEventListener('click', () => this.setTimelyMode('planning'));
         
         // Timely Sub-Tabs Routing Engine
         document.querySelectorAll('#view-timely .sub-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const parent = e.target.closest('#timelySchedulingContent, #timelyPlanningContent');
-                parent.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active');
-                state.timelySubTab = e.target.getAttribute('data-sub');
-                saveState();
+                if (parent) {
+                    parent.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    state.timelySubTab = e.target.getAttribute('data-sub');
+                    saveState();
+                }
             });
         });
 
         // Brainly Components Controllers (HTML-ZONE-3E)
-        document.getElementById('brainlyNewNoteBtn').addEventListener('click', () => this.promptCreateCard('brainly', 'brainly-notes', 'note'));
-        document.getElementById('brainlyNewFolderBtn').addEventListener('click', () => {
+        document.getElementById('brainlyNewNoteBtn')?.addEventListener('click', () => this.promptCreateCard('brainly', 'brainly-notes', 'note'));
+        document.getElementById('brainlyNewFolderBtn')?.addEventListener('click', () => {
             const name = prompt("Enter folder title descriptor:");
             if (name && name.trim() !== "") {
                 state.brainlyFolders.push({ title: name.trim(), emoji: "📁" });
@@ -180,7 +183,7 @@ const lifecycle = {
             }
         });
 
-        document.getElementById('linkInput').addEventListener('keydown', (e) => {
+        document.getElementById('linkInput')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.target.value.trim() !== "") {
                 let url = e.target.value.trim();
                 if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -190,24 +193,24 @@ const lifecycle = {
             }
         });
 
-        document.getElementById('brainlySearch').addEventListener('input', (e) => this.filterBrainly(e.target.value));
+        document.getElementById('brainlySearch')?.addEventListener('input', (e) => this.filterBrainly(e.target.value));
 
         // Intelligence Assistant Panel Toggle (HTML-ZONE-6)
-        document.getElementById('assistantTrigger').addEventListener('click', () => {
-            document.getElementById('assistantPanel').classList.toggle('open');
+        document.getElementById('assistantTrigger')?.addEventListener('click', () => {
+            document.getElementById('assistantPanel')?.classList.toggle('open');
         });
 
         // Assistant Executive Interfaces (Submit & Voice Controls)
-        document.getElementById('assistantSubmit').addEventListener('click', () => this.processAssistantInput());
-        document.getElementById('assistantInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.processAssistantInput(); });
+        document.getElementById('assistantSubmit')?.addEventListener('click', () => this.processAssistantInput());
+        document.getElementById('assistantInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.processAssistantInput(); });
         
-        document.getElementById('assistantVoiceBtn').addEventListener('click', () => this.toggleVoiceStream());
+        document.getElementById('assistantVoiceBtn')?.addEventListener('click', () => this.toggleVoiceStream());
 
         // Modal Action Windows Elements (HTML-ZONE-7)
-        document.getElementById('modalCloseBtn').addEventListener('click', () => {
-            document.getElementById('cardModal').classList.remove('open');
+        document.getElementById('modalCloseBtn')?.addEventListener('click', () => {
+            document.getElementById('cardModal')?.classList.remove('open');
         });
-        document.getElementById('modalSaveBtn').addEventListener('click', () => this.saveModalCard());
+        document.getElementById('modalSaveBtn')?.addEventListener('click', () => this.saveModalCard());
     },
     
 // ==========================================================================
