@@ -445,11 +445,11 @@ body.home-active .navbar {
     max-height: 70vh;
 }
 
-/* Vertical Stack Header: Title top, sleek button directly underneath */
+/* Vertical Stack Header: Left-aligned title top, button directly underneath */
 .col-header-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Aligns both header text and button to the left */
     gap: 8px;
     padding-bottom: 10px;
     border-bottom: rgba(17, 17, 17, 0.04) 1px solid;
@@ -460,7 +460,7 @@ body.home-active .navbar {
     font-size: 13px;
     font-weight: 600;
     color: #555555;
-    text-align: center;
+    text-align: left; /* Left-aligns header text */
 }
 
 /* Sleek Black Circle Add Button */
@@ -475,7 +475,6 @@ body.home-active .navbar {
     font-weight: 500;
     line-height: 1;
     display: flex;
-    align-items: justify;
     align-items: center;
     justify-content: center;
     cursor: pointer;
