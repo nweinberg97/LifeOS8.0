@@ -98,9 +98,6 @@
 
 <!-- ----------------------------------------------------------------------
    HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW
-   Purpose: Multi-stage task management board across 5 pipeline columns.
-   Bindings: #view-taskly, dropzones: taskly-todo, taskly-inprogress, 
-             taskly-review, taskly-completed, taskly-backlog
    ---------------------------------------------------------------------- -->
 <section class="view" id="view-taskly">
     <div class="view-header">
@@ -111,7 +108,7 @@
         <div class="kanban-col">
             <div class="col-header-wrapper">
                 <span class="col-title">To Do</span>
-                <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-todo')">+ Add Task</button>
+                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-todo')" title="Add Task">+</button>
             </div>
             <div class="col-body dropzone" data-container="taskly-todo"></div>
         </div>
@@ -120,7 +117,7 @@
         <div class="kanban-col">
             <div class="col-header-wrapper">
                 <span class="col-title">In Progress</span>
-                <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-inprogress')">+ Add Task</button>
+                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-inprogress')" title="Add Task">+</button>
             </div>
             <div class="col-body dropzone" data-container="taskly-inprogress"></div>
         </div>
@@ -129,7 +126,7 @@
         <div class="kanban-col">
             <div class="col-header-wrapper">
                 <span class="col-title">Review</span>
-                <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-review')">+ Add Task</button>
+                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-review')" title="Add Task">+</button>
             </div>
             <div class="col-body dropzone" data-container="taskly-review"></div>
         </div>
@@ -138,7 +135,7 @@
         <div class="kanban-col">
             <div class="col-header-wrapper">
                 <span class="col-title">Completed</span>
-                <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-completed')">+ Add Task</button>
+                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-completed')" title="Add Task">+</button>
             </div>
             <div class="col-body dropzone" data-container="taskly-completed"></div>
         </div>
@@ -147,12 +144,13 @@
         <div class="kanban-col">
             <div class="col-header-wrapper">
                 <span class="col-title">Backlog</span>
-                <button class="add-task-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-backlog')">+ Add Task</button>
+                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-backlog')" title="Add Task">+</button>
             </div>
             <div class="col-body dropzone" data-container="taskly-backlog"></div>
         </div>
     </div>
 </section>
+        
         <!-- ----------------------------------------------------------------------
            HTML-ZONE-3C: BOARDLY CATEGORY CANVAS MODULE VIEW
            Purpose: Categorized tabbed workspace with goals, tasks, and notes grid.
