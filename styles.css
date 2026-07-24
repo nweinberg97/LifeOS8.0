@@ -428,7 +428,6 @@ body.home-active .navbar {
 
 /* --------------------------------------------------------------------------
    CSS-ZONE-10B: TASKLY KANBAN MODULE
-   Purpose: 5-column grid layout, column containers, dropzones, and buttons.
    -------------------------------------------------------------------------- */
 .kanban-board {
     display: grid;
@@ -446,58 +445,61 @@ body.home-active .navbar {
     max-height: 70vh;
 }
 
-.col-header {
+/* Vertical Stack Header: Title top, sleek button directly underneath */
+.col-header-wrapper {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    font-size: 13px;
-    font-weight: 600;
-    padding-bottom: 12px;
-    color: #555555;
+    gap: 8px;
+    padding-bottom: 10px;
     border-bottom: rgba(17, 17, 17, 0.04) 1px solid;
     margin-bottom: 12px;
 }
 
-/* Optional styling for counter badge */
-.card-count {
-    font-size: 11px;
-    background: rgba(17, 17, 17, 0.06);
-    padding: 2px 6px;
-    border-radius: 10px;
-    color: #777;
+.col-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555555;
+    text-align: center;
+}
+
+/* Sleek Black Circle Add Button */
+.add-task-circle-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #111111;
+    color: #ffffff;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    display: flex;
+    align-items: justify;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+    padding: 0;
+}
+
+.add-task-circle-btn:hover {
+    background-color: #333333;
+    transform: scale(1.08);
+}
+
+.add-task-circle-btn:active {
+    transform: scale(0.95);
 }
 
 .col-body {
     flex: 1;
     overflow-y: auto;
-    min-height: 150px; /* Crucial: Prevents dropzone collapse on empty columns */
+    min-height: 150px; /* Prevents dropzone collapse on empty columns */
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Spacing between cards inside the column */
+    gap: 8px;
 }
-
-/* 5-Column Inline Add Task Button Styling */
-.add-task-btn {
-    margin-top: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #666;
-    background: transparent;
-    border: 1px dashed rgba(17, 17, 17, 0.15);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    width: 100%;
-}
-
-.add-task-btn:hover {
-    background: rgba(17, 17, 17, 0.04);
-    color: #111;
-    border-color: rgba(17, 17, 17, 0.3);
-}
-
 /* --------------------------------------------------------------------------
    CSS-ZONE-10C: BOARDLY CATEGORY CANVAS MODULE
    Purpose: Scrollable category tabs bar, active tab indicators, and dynamic card grid.
