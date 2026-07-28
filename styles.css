@@ -499,6 +499,53 @@ body.home-active .navbar {
     flex-direction: column;
     gap: 8px;
 }
+
+/* Card Surface & Truncation Rules */
+.card-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-desc-preview {
+    font-size: 11px;
+    color: #777777;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 4px;
+}
+
+/* Bottom Card Controls */
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.card-settings-btn {
+    background: transparent;
+    border: none;
+    color: #888888;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.card-settings-btn:hover {
+    color: #111111;
+    background-color: rgba(17, 17, 17, 0.05);
+}
+
+.card-settings-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
 /* --------------------------------------------------------------------------
    CSS-ZONE-10C: BOARDLY CATEGORY CANVAS MODULE
    Purpose: Scrollable category tabs bar, active tab indicators, and dynamic card grid.
