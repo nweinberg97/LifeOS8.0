@@ -374,6 +374,7 @@ body.home-active .navbar {
     max-width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+    flex-shrink: 0; /* Prevents card squishing in full columns */
 }
 
 .lifeos-card:hover {
@@ -395,7 +396,7 @@ body.home-active .navbar {
 /* Full-width Click & Double-Click Header Surface */
 .card-title {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500; /* Unbolded from 600 for subtle visual hierarchy */
     line-height: 1.4;
     color: var(--bg-dark);
     display: block;
@@ -437,6 +438,7 @@ body.home-active .navbar {
     margin-top: 2px;
     margin-bottom: 6px;
     flex-grow: 1;
+    min-width: 0;
 }
 
 .card-desc { 
@@ -444,6 +446,36 @@ body.home-active .navbar {
     color: #666666; 
     line-height: 1.5; 
     white-space: pre-wrap; 
+}
+
+/* Bottom Footer Container */
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    min-width: 0;
+}
+
+/* Subtle Timestamp & Relative Time Badge */
+.card-updated-badge {
+    font-size: 10px;
+    color: #777777;
+    background-color: rgba(0, 0, 0, 0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+}
+
+.card-updated-badge svg {
+    width: 10px;
+    height: 10px;
+    fill: currentColor;
+    opacity: 0.7;
 }
 
 .card-meta { 
@@ -503,9 +535,11 @@ body.home-active .navbar {
 .dash-col h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; opacity: 0.9; text-align: left; }
 .dash-card-list { min-height: 200px; }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    CSS-ZONE-10B: TASKLY KANBAN MODULE
-   -------------------------------------------------------------------------- */
+   Purpose: Column grid architecture, dynamic vertical scroll containers,
+            and view-specific Kanban UI controls.
+   ========================================================================== */
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -520,6 +554,8 @@ body.home-active .navbar {
     display: flex;
     flex-direction: column;
     max-height: 70vh;
+    min-width: 0; /* Prevents flex items from overflowing grid columns */
+    overflow: hidden;
 }
 
 /* Vertical Stack Header: Left-aligned title top, button directly underneath */
@@ -531,13 +567,14 @@ body.home-active .navbar {
     padding-bottom: 10px;
     border-bottom: rgba(17, 17, 17, 0.04) 1px solid;
     margin-bottom: 12px;
+    flex-shrink: 0;
 }
 
 .col-title {
     font-size: 13px;
     font-weight: 600;
     color: #555555;
-    text-align: left; /* Left-aligns header text */
+    text-align: left;
 }
 
 /* Sleek Black Circle Add Button */
@@ -571,33 +608,15 @@ body.home-active .navbar {
 .col-body {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     min-height: 150px; /* Prevents dropzone collapse on empty columns */
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-right: 2px; /* Smooth scrollbar offset */
 }
 
-/* Card Surface & Truncation Rules */
-.card-desc-preview {
-    font-size: 11px;
-    color: #777777;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-top: 4px;
-    min-width: 0;
-    max-width: 100%;
-    display: block;
-}
-
-/* Bottom Card Controls */
-.card-footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top: 8px;
-}
-
+/* Settings Gear Button Hover State */
 .card-settings-btn {
     background: transparent;
     border: none;
@@ -608,6 +627,7 @@ body.home-active .navbar {
     align-items: center;
     justify-content: center;
     border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .card-settings-btn:hover {
