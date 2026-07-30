@@ -451,15 +451,44 @@ const lifecycle = {
         if (card.type === 'task') typeIcon = "✅";
         if (card.type === 'note') typeIcon = "📝";
 
-        div.innerHTML = `
-            <div class="card-title">${typeIcon} ${card.title}</div>
-            <div class="card-desc">${card.description || 'No detailed data entries compiled.'}</div>
-            <div class="card-meta">
-                <span>${card.tool.toUpperCase()}</span>
-                <span>${new Date(card.updatedAt).toLocaleDateString()}</span>
-            </div>
+        // 1. Title Element (Truncated to 1 line via CSS)
+        const titleEl = document.createElement('div');
+        titleEl.className = 'card-title';
+        titleEl.innerHTML = `${typeIcon} ${card.title}`;
+        div.appendChild(titleEl);
+
+        // 2. Description Preview Element (Only created if description content exists)
+        if (card.description && card.description.trim() !== '') {
+            const descEl = document.createElement('div');
+            descEl.className = 'card-desc-preview';
+            descEl.textContent = card.description;
+            div.appendChild(descEl);
+        }
+
+        // 3. Card Footer (Right-aligned Settings Gear Button, meta date/tool tag removed)
+        const footerEl = document.createElement('div');
+        footerEl.className = 'card-footer';
+
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'card-settings-btn';
+        settingsBtn.title = 'Card Settings & Details';
+        settingsBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
         `;
 
+        // Stop click/drag propagation to open Settings cleanly
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            this.openCardModal(card.id);
+        });
+
+        footerEl.appendChild(settingsBtn);
+        div.appendChild(footerEl);
+
+        // Native Drag Listeners
         div.addEventListener('dragstart', (e) => {
             div.classList.add('dragging');
             e.dataTransfer.setData('text/plain', card.id);
@@ -768,6 +797,16 @@ const lifecycle = {
         document.getElementById('modalCardTitle').value = card.title;
         document.getElementById('modalCardDesc').value = card.description || '';
         document.getElementById('modalCardId').value = card.id;
+
+        // Safely bind creation date to modal header date badge if present
+        const dateDisplayNode = document.getElementById('modalCardDate');
+        if (dateDisplayNode) {
+            const formattedDate = card.createdAt 
+                ? new Date(card.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'No date';
+            dateDisplayNode.textContent = formattedDate;
+        }
+
         document.getElementById('cardModal').classList.add('open');
     },
 
@@ -788,7 +827,6 @@ const lifecycle = {
         }
         document.getElementById('cardModal').classList.remove('open');
     },
-
 // ==========================================================================
 // JS-ZONE-11: INTELLIGENCE ENGINE / VOICE ASSISTANT MODULE
 // Purpose: Simulates AI text parsing, command execution (e.g. "create task ..."),
