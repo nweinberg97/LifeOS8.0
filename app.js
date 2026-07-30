@@ -429,7 +429,7 @@ const lifecycle = {
 
 // ==========================================================================
 // JS-ZONE-7: RENDER PIPELINE ORCHESTRATOR & DOM CARD BUILDER
-// Purpose: Master render execution loop and HTML DOM element instantiation for cards.
+// Purpose: Master render execution loop, HTML DOM instantiation, relative time computation.
 // ==========================================================================
     renderAll() {
         this.renderHome();
@@ -438,6 +438,28 @@ const lifecycle = {
         this.renderTimely();
         this.renderBrainly();
         this.renderUniversalBoard();
+    },
+
+    // Helper: Calculates clean, human-readable relative timestamps
+    getRelativeTime(timestamp) {
+        if (!timestamp) return 'just now';
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diffInSeconds = Math.floor((now - past) / 1000);
+
+        if (diffInSeconds < 30) return 'just now';
+        if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 30) return `${diffInDays}d ago`;
+
+        return past.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     },
 
     createCardDOM(card) {
@@ -454,7 +476,7 @@ const lifecycle = {
         // 1. Title Element Container
         const titleEl = document.createElement('div');
         titleEl.className = 'card-title';
-        titleEl.innerHTML = `${typeIcon} <span class="title-text">${card.title}</span>`;
+        titleEl.innerHTML = `${typeIcon} <span class="title-text">${card.title || 'Untitled Card'}</span>`;
         div.appendChild(titleEl);
 
         // 2. Description Preview: Extract 1st non-empty line
@@ -470,14 +492,12 @@ const lifecycle = {
 
         // Expanded Double-Click Zone for Seamless Native Inline Title Editing
         const enableInlineEdit = (e) => {
-            // Prevent triggering inline edit if gear button or interactive elements were clicked
             if (e.target.closest('.card-settings-btn')) return;
             e.stopPropagation();
 
             const textSpan = titleEl.querySelector('.title-text');
             if (!textSpan || textSpan.isContentEditable) return;
 
-            // Temporarily disable dragging while editing text
             div.setAttribute('draggable', 'false');
             textSpan.contentEditable = "true";
             textSpan.focus();
@@ -500,9 +520,9 @@ const lifecycle = {
                     card.title = newTitle;
                     card.updatedAt = new Date().toISOString();
                     saveState();
-                    this.renderAll(); // Refresh DOM to reflect updated state/badges
+                    this.renderAll();
                 } else {
-                    textSpan.textContent = originalTitle; // Revert if empty or unchanged
+                    textSpan.textContent = originalTitle || 'Untitled Card';
                 }
                 cleanup();
             };
@@ -512,7 +532,7 @@ const lifecycle = {
                     evt.preventDefault();
                     textSpan.blur();
                 } else if (evt.key === 'Escape') {
-                    textSpan.textContent = originalTitle;
+                    textSpan.textContent = originalTitle || 'Untitled Card';
                     textSpan.contentEditable = "false";
                     div.setAttribute('draggable', 'true');
                     cleanup();
@@ -528,27 +548,25 @@ const lifecycle = {
             textSpan.addEventListener('keydown', keyHandler);
         };
 
-        // Attach double-click trigger to entire card body for maximum hit-box target
         div.addEventListener('dblclick', enableInlineEdit);
 
-        // 3. Card Footer: Status Badge + Isolated Settings Gear Button
+        // 3. Card Footer: Subtle Timestamp Badge + Settings Gear Button
         const footerEl = document.createElement('div');
         footerEl.className = 'card-footer';
 
-        // Updated Status Tag Logic
-        const hasBeenEdited = card.createdAt && card.updatedAt && 
-            (new Date(card.updatedAt).getTime() - new Date(card.createdAt).getTime() > 1000);
+        // Dynamic Relative Timestamp Badge with Edit/Clock Icon
+        const timeStamp = card.updatedAt || card.createdAt;
+        const relativeTimeStr = this.getRelativeTime(timeStamp);
 
-        if (hasBeenEdited) {
-            const updatedTag = document.createElement('span');
-            updatedTag.className = 'card-updated-badge';
-            updatedTag.textContent = 'Updated';
-            footerEl.appendChild(updatedTag);
-        } else {
-            // Spacer to keep layout balanced
-            const emptySpacer = document.createElement('span');
-            footerEl.appendChild(emptySpacer);
-        }
+        const updatedBadge = document.createElement('span');
+        updatedBadge.className = 'card-updated-badge';
+        updatedBadge.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+            ${relativeTimeStr}
+        `;
+        footerEl.appendChild(updatedBadge);
 
         const settingsBtn = document.createElement('button');
         settingsBtn.className = 'card-settings-btn';
@@ -559,7 +577,6 @@ const lifecycle = {
             </svg>
         `;
 
-        // Open modal exclusively via gear button click
         settingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -581,7 +598,7 @@ const lifecycle = {
         });
 
         return div;
-    },
+    }
 // ==========================================================================
 // JS-ZONE-8: MODULE RENDER ENGINES
 // ==========================================================================
@@ -618,9 +635,9 @@ const lifecycle = {
     },
 
 // ----------------------------------------------------------------------
-// JS-ZONE-8C: TASKLY KANBAN ENGINE (60FPS RAF-OPTIMIZED)
-// Purpose: Distributes cards across all 5 Taskly columns & supports 
-//          high-performance, lag-free vertical drag re-ordering.
+// JS-ZONE-8C: TASKLY KANBAN ENGINE & INLINE ADD HANDLER
+// Purpose: Renders column cards, attaches native inline creation listeners,
+//          and maintains high-performance 60FPS drag re-ordering.
 // ----------------------------------------------------------------------
     renderTaskly() {
         const columns = ['todo', 'inprogress', 'review', 'completed', 'backlog'];
@@ -639,14 +656,88 @@ const lifecycle = {
                     containerNode.appendChild(this.createCardDOM(c));
                 });
 
-            // Prevent attaching duplicate event listeners on subsequent re-renders
+            // Wire up the "+" add button for native inline card creation
+            const colHeader = containerNode.closest('.kanban-col')?.querySelector('.col-header-wrapper');
+            const addBtn = colHeader?.querySelector('.add-task-circle-btn');
+
+            if (addBtn && addBtn.dataset.listenerAttached !== "true") {
+                addBtn.dataset.listenerAttached = "true";
+                addBtn.addEventListener('click', () => {
+                    // 1. Instantly create a new card data object
+                    const newCard = {
+                        id: 'card_' + Date.now(),
+                        title: '',
+                        description: '',
+                        container: `taskly-${col}`,
+                        type: 'task',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    // 2. Append to state & build DOM node
+                    state.cards.push(newCard);
+                    saveState();
+
+                    const cardDOM = this.createCardDOM(newCard);
+                    containerNode.appendChild(cardDOM);
+
+                    // 3. Immediately focus title for inline editing
+                    const titleTextSpan = cardDOM.querySelector('.title-text');
+                    if (titleTextSpan) {
+                        cardDOM.setAttribute('draggable', 'false');
+                        titleTextSpan.contentEditable = "true";
+                        titleTextSpan.focus();
+
+                        const handleNewCardSave = () => {
+                            titleTextSpan.contentEditable = "false";
+                            cardDOM.setAttribute('draggable', 'true');
+                            const enteredTitle = titleTextSpan.textContent.trim();
+
+                            if (enteredTitle) {
+                                newCard.title = enteredTitle;
+                                newCard.updatedAt = new Date().toISOString();
+                                saveState();
+                                this.renderAll();
+                            } else {
+                                // If left empty, discard card cleanly
+                                state.cards = state.cards.filter(c => c.id !== newCard.id);
+                                saveState();
+                                cardDOM.remove();
+                            }
+                            cleanupNewCard();
+                        };
+
+                        const handleNewCardKey = (evt) => {
+                            if (evt.key === 'Enter') {
+                                evt.preventDefault();
+                                titleTextSpan.blur();
+                            } else if (evt.key === 'Escape') {
+                                state.cards = state.cards.filter(c => c.id !== newCard.id);
+                                saveState();
+                                cardDOM.remove();
+                                cleanupNewCard();
+                            }
+                        };
+
+                        const cleanupNewCard = () => {
+                            titleTextSpan.removeEventListener('blur', handleNewCardSave);
+                            titleTextSpan.removeEventListener('keydown', handleNewCardKey);
+                        };
+
+                        titleTextSpan.addEventListener('blur', handleNewCardSave);
+                        titleTextSpan.addEventListener('keydown', handleNewCardKey);
+                    }
+                });
+            }
+
+            // Prevent attaching duplicate drag event listeners on re-renders
             if (containerNode.dataset.dragListenersAttached === "true") return;
             containerNode.dataset.dragListenersAttached = "true";
 
             // High-performance RAF throttle state
             let isDragScheduled = false;
 
-            // Dragover handler using RequestAnimationFrame to eliminate lag & cursor glitches
+            // Dragover handler using RequestAnimationFrame to eliminate lag
             containerNode.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -676,7 +767,7 @@ const lifecycle = {
                 });
             });
 
-            // Drop handler to commit column container & internal vertical sequence
+            // Drop handler to commit column container & sequence
             containerNode.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const cardId = e.dataTransfer.getData('text/plain');
@@ -685,7 +776,6 @@ const lifecycle = {
                 if (card) {
                     card.container = `taskly-${col}`;
                     
-                    // Re-index card array sequence based on current vertical DOM order
                     const reorderedIds = Array.from(containerNode.querySelectorAll('.lifeos-card'))
                                               .map(el => el.getAttribute('data-id'));
                     
@@ -715,8 +805,7 @@ const lifecycle = {
                 return closest;
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
-    },
-    
+    }
     // ----------------------------------------------------------------------
     // JS-ZONE-8D: BOARDLY TABBED WORKSPACE ENGINE
     // Purpose: Renders dynamic category tabs and filters cards for active workspace tab.
