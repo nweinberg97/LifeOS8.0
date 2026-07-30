@@ -320,24 +320,27 @@
         </div>
     </div>
 
-    <!-- ==========================================================================
-       HTML-ZONE-7: ITEM CARD DETAIL MODAL
-       Purpose: Global modal overlay for editing title and description of any card item.
-       Bindings: #cardModal, #modalCardTitle, #modalCardDesc, #modalCardId,
-                 #modalCloseBtn, #modalSaveBtn
-       ========================================================================== -->
-    <div class="modal-overlay" id="cardModal">
-        <div class="modal-content">
+ <!-- ==========================================================================
+     HTML-ZONE-7: ITEM CARD DETAIL MODAL
+     Purpose: Global modal overlay for editing title and description of any card item.
+     Bindings: #cardModal, #modalCardTitle, #modalCardDesc, #modalCardId, #modalCardDate,
+               #modalCloseBtn, #modalSaveBtn
+     ========================================================================== -->
+<div class="modal-overlay" id="cardModal">
+    <div class="modal-content">
+        <div class="modal-header-wrapper">
             <h3>Modify Item Elements</h3>
-            <input type="text" id="modalCardTitle" placeholder="Title">
-            <textarea id="modalCardDesc" rows="4" placeholder="Description / Markdown Segment"></textarea>
-            <input type="hidden" id="modalCardId">
-            <div class="modal-actions">
-                <button class="btn-action secondary" id="modalCloseBtn">Cancel</button>
-                <button class="btn-action" id="modalSaveBtn">Save Modifications</button>
-            </div>
+            <span id="modalCardDate" class="modal-date-badge"></span>
+        </div>
+        <input type="text" id="modalCardTitle" placeholder="Title">
+        <textarea id="modalCardDesc" rows="4" placeholder="Description / Markdown Segment"></textarea>
+        <input type="hidden" id="modalCardId">
+        <div class="modal-actions">
+            <button class="btn-action secondary" id="modalCloseBtn">Cancel</button>
+            <button class="btn-action" id="modalSaveBtn">Save Modifications</button>
         </div>
     </div>
+</div>
 
     <script src="app.js"></script>
 </body>
