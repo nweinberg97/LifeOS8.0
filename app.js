@@ -451,21 +451,75 @@ const lifecycle = {
         if (card.type === 'task') typeIcon = "✅";
         if (card.type === 'note') typeIcon = "📝";
 
-        // 1. Title Element (Truncated to 1 line via CSS)
+        // 1. Title Element with Double-Click Inline Editing
         const titleEl = document.createElement('div');
         titleEl.className = 'card-title';
-        titleEl.innerHTML = `${typeIcon} ${card.title}`;
+        titleEl.innerHTML = `${typeIcon} <span class="title-text">${card.title}</span>`;
+        
+        // Double Click Trigger for Inline Editing directly on Card Face
+        titleEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const textSpan = titleEl.querySelector('.title-text') || titleEl;
+            textSpan.contentEditable = "true";
+            textSpan.focus();
+
+            // Select all text inside title for quick overwrite
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(textSpan);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            const originalTitle = card.title;
+
+            // Commit inline edits on blur or Enter key press
+            const saveInlineTitle = () => {
+                textSpan.contentEditable = "false";
+                const newTitle = textSpan.textContent.trim();
+                if (newTitle && newTitle !== card.title) {
+                    card.title = newTitle;
+                    card.updatedAt = new Date().toISOString();
+                    saveState();
+                } else {
+                    textSpan.textContent = originalTitle; // Revert if empty
+                }
+                cleanup();
+            };
+
+            const keyHandler = (evt) => {
+                if (evt.key === 'Enter') {
+                    evt.preventDefault();
+                    textSpan.blur();
+                } else if (evt.key === 'Escape') {
+                    textSpan.textContent = originalTitle;
+                    textSpan.contentEditable = "false";
+                    cleanup();
+                }
+            };
+
+            const cleanup = () => {
+                textSpan.removeEventListener('blur', saveInlineTitle);
+                textSpan.removeEventListener('keydown', keyHandler);
+            };
+
+            textSpan.addEventListener('blur', saveInlineTitle);
+            textSpan.addEventListener('keydown', keyHandler);
+        });
+
         div.appendChild(titleEl);
 
-        // 2. Description Preview Element (Only created if description content exists)
+        // 2. Description Preview: Extract only 1st non-empty line (clean single-line truncation)
         if (card.description && card.description.trim() !== '') {
-            const descEl = document.createElement('div');
-            descEl.className = 'card-desc-preview';
-            descEl.textContent = card.description;
-            div.appendChild(descEl);
+            const lines = card.description.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length > 0) {
+                const descEl = document.createElement('div');
+                descEl.className = 'card-desc-preview';
+                descEl.textContent = lines[0];
+                div.appendChild(descEl);
+            }
         }
 
-        // 3. Card Footer (Right-aligned Settings Gear Button, meta date/tool tag removed)
+        // 3. Card Footer: Holds the isolated settings gear button
         const footerEl = document.createElement('div');
         footerEl.className = 'card-footer';
 
@@ -474,11 +528,11 @@ const lifecycle = {
         settingsBtn.title = 'Card Settings & Details';
         settingsBtn.innerHTML = `
             <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/>
             </svg>
         `;
 
-        // Stop click/drag propagation to open Settings cleanly
+        // Open modal exclusively via gear button click
         settingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -488,7 +542,7 @@ const lifecycle = {
         footerEl.appendChild(settingsBtn);
         div.appendChild(footerEl);
 
-        // Native Drag Listeners
+        // Native Drag Event Listeners
         div.addEventListener('dragstart', (e) => {
             div.classList.add('dragging');
             e.dataTransfer.setData('text/plain', card.id);
@@ -499,11 +553,9 @@ const lifecycle = {
             div.classList.remove('dragging');
         });
 
-        div.addEventListener('dblclick', () => this.openCardModal(card.id));
-
         return div;
     },
-
+    
 // ==========================================================================
 // JS-ZONE-8: MODULE RENDER ENGINES
 // ==========================================================================
@@ -539,23 +591,77 @@ const lifecycle = {
         dynamicRecent.forEach(c => recent.appendChild(this.createCardDOM(c)));
     },
 
-    // ----------------------------------------------------------------------
-    // JS-ZONE-8C: TASKLY KANBAN ENGINE
-    // Purpose: Distributes cards across the 5 Taskly kanban columns.
-    // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// JS-ZONE-8C: TASKLY KANBAN ENGINE
+// Purpose: Distributes cards across all 5 Taskly columns & supports vertical drag re-ordering.
+// ----------------------------------------------------------------------
     renderTaskly() {
         const columns = ['todo', 'inprogress', 'review', 'completed', 'backlog'];
         columns.forEach(col => {
             const containerNode = document.querySelector(`[data-container="taskly-${col}"]`);
             if (containerNode) {
                 containerNode.innerHTML = '';
+                
+                // Render existing cards belonging to this column
                 state.cards.filter(c => c.container === `taskly-${col}`).forEach(c => {
                     containerNode.appendChild(this.createCardDOM(c));
+                });
+
+                // Dragover handler for dynamic vertical position calculation
+                containerNode.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const draggingCard = document.querySelector('.lifeos-card.dragging');
+                    if (!draggingCard) return;
+
+                    const afterElement = this.getDragAfterElement(containerNode, e.clientY);
+                    if (afterElement == null) {
+                        containerNode.appendChild(draggingCard);
+                    } else {
+                        containerNode.insertBefore(draggingCard, afterElement);
+                    }
+                });
+
+                // Drop handler to commit column container & internal vertical sequence
+                containerNode.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const cardId = e.dataTransfer.getData('text/plain');
+                    const card = state.cards.find(c => c.id === cardId);
+                    if (card) {
+                        card.container = `taskly-${col}`;
+                        
+                        // Re-index card array sequence based on current vertical DOM order
+                        const reorderedIds = Array.from(containerNode.querySelectorAll('.lifeos-card'))
+                                                  .map(el => el.getAttribute('data-id'));
+                        
+                        state.cards.sort((a, b) => {
+                            const indexA = reorderedIds.indexOf(a.id);
+                            const indexB = reorderedIds.indexOf(b.id);
+                            if (indexA === -1 || indexB === -1) return 0;
+                            return indexA - indexB;
+                        });
+
+                        saveState();
+                    }
                 });
             }
         });
     },
 
+    // Helper: Calculates vertical offset of cursor relative to neighboring cards
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.lifeos-card:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    },
+    
     // ----------------------------------------------------------------------
     // JS-ZONE-8D: BOARDLY TABBED WORKSPACE ENGINE
     // Purpose: Renders dynamic category tabs and filters cards for active workspace tab.
@@ -789,24 +895,33 @@ const lifecycle = {
 
 // ==========================================================================
 // JS-ZONE-10: MODAL CARD EDITOR CONTROLLER
-// Purpose: Handles opening modal dialogs, updating card fields, and persisting state.
+// Purpose: Handles opening modal dialogs, injecting top-right date badge,
+//          updating card fields, and persisting state changes.
 // ==========================================================================
     openCardModal(cardId) {
         const card = state.cards.find(c => c.id === cardId);
         if (!card) return;
+
+        // Populate modal inputs
         document.getElementById('modalCardTitle').value = card.title;
         document.getElementById('modalCardDesc').value = card.description || '';
         document.getElementById('modalCardId').value = card.id;
 
-        // Safely bind creation date to modal header date badge if present
+        // Render Creation Date in Top-Right Header Badge (MM/DD/YYYY format)
         const dateDisplayNode = document.getElementById('modalCardDate');
         if (dateDisplayNode) {
-            const formattedDate = card.createdAt 
-                ? new Date(card.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                : 'No date';
+            const dateSource = card.createdAt || card.updatedAt || new Date().toISOString();
+            const dateObj = new Date(dateSource);
+            
+            // Format strictly to MM/DD/YYYY (e.g., 07/30/2026)
+            const formattedDate = !isNaN(dateObj.getTime())
+                ? dateObj.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+                : '07/30/2026';
+
             dateDisplayNode.textContent = formattedDate;
         }
 
+        // Open modal overlay
         document.getElementById('cardModal').classList.add('open');
     },
 
@@ -818,15 +933,17 @@ const lifecycle = {
             card.description = document.getElementById('modalCardDesc').value;
             card.updatedAt = new Date().toISOString();
             
-            // Auto folder categorizer mapping adapter for notes view if explicitly filtered
+            // Folder categorizer adapter for Brainly views if folder tag active
             if (card.tool === 'brainly' && state.brainlyActiveFolder && !card.description.includes('[Folder:')) {
                 card.description += `\n\n[Folder: ${state.brainlyActiveFolder}]`;
             }
             
             saveState();
+            this.renderAll(); // Refresh UI across views
         }
         document.getElementById('cardModal').classList.remove('open');
     },
+    
 // ==========================================================================
 // JS-ZONE-11: INTELLIGENCE ENGINE / VOICE ASSISTANT MODULE
 // Purpose: Simulates AI text parsing, command execution (e.g. "create task ..."),
