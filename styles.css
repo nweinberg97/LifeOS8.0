@@ -364,6 +364,11 @@ body.home-active .navbar {
     position: relative;
     user-select: none;
     margin-bottom: 12px;
+    /* Strict Column Constraints: Prevents long text from swelling card or Kanban col width */
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 .lifeos-card:hover {
     border-color: var(--border-hover);
@@ -372,10 +377,30 @@ body.home-active .navbar {
 .lifeos-card:active { cursor: grabbing; }
 .lifeos-card.dragging { opacity: 0.4; transform: scale(0.98); }
 
-.card-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--bg-dark); }
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--bg-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    max-width: 100%;
+    outline: none;
+    border-radius: 3px;
+    padding: 1px 2px;
+}
+
+/* Highlight border when title is actively being inline edited */
+.card-title[contenteditable="true"]:focus {
+    background-color: rgba(17, 17, 17, 0.04);
+    box-shadow: inset 0 0 0 1px #111111;
+    cursor: text;
+}
+
 .card-desc { font-size: 12px; color: #666666; line-height: 1.5; white-space: pre-wrap; }
 .card-meta { font-size: 10px; color: #999999; margin-top: 10px; display: flex; justify-content: space-between; }
-
 /* ==========================================================================
    CSS-ZONE-10: MODULE VIEWS STYLING
    ========================================================================== */
@@ -501,12 +526,6 @@ body.home-active .navbar {
 }
 
 /* Card Surface & Truncation Rules */
-.card-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 .card-desc-preview {
     font-size: 11px;
     color: #777777;
@@ -514,6 +533,9 @@ body.home-active .navbar {
     overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 4px;
+    min-width: 0;
+    max-width: 100%;
+    display: block;
 }
 
 /* Bottom Card Controls */
@@ -780,20 +802,27 @@ body.home-active .navbar {
 
 /* ==========================================================================
    CSS-ZONE-13: MODAL OVERLAY ARCHITECTURE
-   Purpose: Global edit modal, translucent backdrop filter, dialog card, inputs, 
+   Purpose: Global edit modal, translucent backdrop filter, dialog card, inputs,
             and action buttons. (Matches HTML-ZONE-7)
    ========================================================================== */
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.2);
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(4px);
     z-index: 200;
     display: none;
     align-items: center;
     justify-content: center;
 }
-.modal-overlay.open { display: flex; }
+
+.modal-overlay.open { 
+    display: flex; 
+}
+
 .modal-content {
     background: var(--bg-white);
     padding: 24px;
@@ -804,11 +833,80 @@ body.home-active .navbar {
     flex-direction: column;
     gap: 12px;
 }
-.modal-content h3 { font-size: 16px; font-weight: 600; }
-.modal-content input, .modal-content textarea {
-    width: 100%; padding: 8px; border: var(--border-light) 1px solid; border-radius: 6px; outline: none;
+
+/* Header layout: Title on left, creation date badge on right */
+.modal-header-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+.modal-header-wrapper h3 { 
+    font-size: 16px; 
+    font-weight: 600; 
+    color: var(--bg-dark);
+    margin: 0;
+}
+
+.modal-date-badge {
+    font-size: 11px;
+    color: #888888;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.modal-content input, 
+.modal-content textarea {
+    width: 100%; 
+    padding: 8px; 
+    border: var(--border-light) 1px solid; 
+    border-radius: 6px; 
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 13px;
+    transition: border-color 0.15s ease;
+}
+
+.modal-content input:focus, 
+.modal-content textarea:focus {
+    border-color: #111111;
+}
+
+.modal-actions { 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 8px; 
+    margin-top: 8px; 
+}
+
+.btn-action {
+    background: #111111;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-card);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-action:hover {
+    background: #333333;
+}
+
+.btn-action.secondary {
+    background: transparent;
+    color: #666666;
+    border: var(--border-light) 1px solid;
+}
+
+.btn-action.secondary:hover {
+    background: rgba(17, 17, 17, 0.04);
+    color: #111111;
+}
 
 /* ==========================================================================
    CSS-ZONE-14: SYSTEM UTILITIES
