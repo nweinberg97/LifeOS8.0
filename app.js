@@ -451,19 +451,38 @@ const lifecycle = {
         if (card.type === 'task') typeIcon = "✅";
         if (card.type === 'note') typeIcon = "📝";
 
-        // 1. Title Element with Double-Click Inline Editing
+        // 1. Title Element Container
         const titleEl = document.createElement('div');
         titleEl.className = 'card-title';
         titleEl.innerHTML = `${typeIcon} <span class="title-text">${card.title}</span>`;
-        
-        // Double Click Trigger for Inline Editing directly on Card Face
-        titleEl.addEventListener('dblclick', (e) => {
+        div.appendChild(titleEl);
+
+        // 2. Description Preview: Extract 1st non-empty line
+        if (card.description && card.description.trim() !== '') {
+            const lines = card.description.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length > 0) {
+                const descEl = document.createElement('div');
+                descEl.className = 'card-desc-preview';
+                descEl.textContent = lines[0];
+                div.appendChild(descEl);
+            }
+        }
+
+        // Expanded Double-Click Zone for Seamless Native Inline Title Editing
+        const enableInlineEdit = (e) => {
+            // Prevent triggering inline edit if gear button or interactive elements were clicked
+            if (e.target.closest('.card-settings-btn')) return;
             e.stopPropagation();
-            const textSpan = titleEl.querySelector('.title-text') || titleEl;
+
+            const textSpan = titleEl.querySelector('.title-text');
+            if (!textSpan || textSpan.isContentEditable) return;
+
+            // Temporarily disable dragging while editing text
+            div.setAttribute('draggable', 'false');
             textSpan.contentEditable = "true";
             textSpan.focus();
 
-            // Select all text inside title for quick overwrite
+            // Native Text Selection across title string
             const selection = window.getSelection();
             const range = document.createRange();
             range.selectNodeContents(textSpan);
@@ -472,16 +491,18 @@ const lifecycle = {
 
             const originalTitle = card.title;
 
-            // Commit inline edits on blur or Enter key press
             const saveInlineTitle = () => {
                 textSpan.contentEditable = "false";
+                div.setAttribute('draggable', 'true');
                 const newTitle = textSpan.textContent.trim();
+
                 if (newTitle && newTitle !== card.title) {
                     card.title = newTitle;
                     card.updatedAt = new Date().toISOString();
                     saveState();
+                    this.renderAll(); // Refresh DOM to reflect updated state/badges
                 } else {
-                    textSpan.textContent = originalTitle; // Revert if empty
+                    textSpan.textContent = originalTitle; // Revert if empty or unchanged
                 }
                 cleanup();
             };
@@ -493,6 +514,7 @@ const lifecycle = {
                 } else if (evt.key === 'Escape') {
                     textSpan.textContent = originalTitle;
                     textSpan.contentEditable = "false";
+                    div.setAttribute('draggable', 'true');
                     cleanup();
                 }
             };
@@ -504,24 +526,29 @@ const lifecycle = {
 
             textSpan.addEventListener('blur', saveInlineTitle);
             textSpan.addEventListener('keydown', keyHandler);
-        });
+        };
 
-        div.appendChild(titleEl);
+        // Attach double-click trigger to entire card body for maximum hit-box target
+        div.addEventListener('dblclick', enableInlineEdit);
 
-        // 2. Description Preview: Extract only 1st non-empty line (clean single-line truncation)
-        if (card.description && card.description.trim() !== '') {
-            const lines = card.description.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            if (lines.length > 0) {
-                const descEl = document.createElement('div');
-                descEl.className = 'card-desc-preview';
-                descEl.textContent = lines[0];
-                div.appendChild(descEl);
-            }
-        }
-
-        // 3. Card Footer: Holds the isolated settings gear button
+        // 3. Card Footer: Status Badge + Isolated Settings Gear Button
         const footerEl = document.createElement('div');
         footerEl.className = 'card-footer';
+
+        // Updated Status Tag Logic
+        const hasBeenEdited = card.createdAt && card.updatedAt && 
+            (new Date(card.updatedAt).getTime() - new Date(card.createdAt).getTime() > 1000);
+
+        if (hasBeenEdited) {
+            const updatedTag = document.createElement('span');
+            updatedTag.className = 'card-updated-badge';
+            updatedTag.textContent = 'Updated';
+            footerEl.appendChild(updatedTag);
+        } else {
+            // Spacer to keep layout balanced
+            const emptySpacer = document.createElement('span');
+            footerEl.appendChild(emptySpacer);
+        }
 
         const settingsBtn = document.createElement('button');
         settingsBtn.className = 'card-settings-btn';
@@ -555,7 +582,6 @@ const lifecycle = {
 
         return div;
     },
-    
 // ==========================================================================
 // JS-ZONE-8: MODULE RENDER ENGINES
 // ==========================================================================
@@ -592,58 +618,87 @@ const lifecycle = {
     },
 
 // ----------------------------------------------------------------------
-// JS-ZONE-8C: TASKLY KANBAN ENGINE
-// Purpose: Distributes cards across all 5 Taskly columns & supports vertical drag re-ordering.
+// JS-ZONE-8C: TASKLY KANBAN ENGINE (60FPS RAF-OPTIMIZED)
+// Purpose: Distributes cards across all 5 Taskly columns & supports 
+//          high-performance, lag-free vertical drag re-ordering.
 // ----------------------------------------------------------------------
     renderTaskly() {
         const columns = ['todo', 'inprogress', 'review', 'completed', 'backlog'];
+        
         columns.forEach(col => {
             const containerNode = document.querySelector(`[data-container="taskly-${col}"]`);
-            if (containerNode) {
-                containerNode.innerHTML = '';
-                
-                // Render existing cards belonging to this column
-                state.cards.filter(c => c.container === `taskly-${col}`).forEach(c => {
+            if (!containerNode) return;
+
+            // Clear container before rendering fresh cards
+            containerNode.innerHTML = '';
+            
+            // Render existing cards belonging to this column
+            state.cards
+                .filter(c => c.container === `taskly-${col}`)
+                .forEach(c => {
                     containerNode.appendChild(this.createCardDOM(c));
                 });
 
-                // Dragover handler for dynamic vertical position calculation
-                containerNode.addEventListener('dragover', (e) => {
-                    e.preventDefault();
+            // Prevent attaching duplicate event listeners on subsequent re-renders
+            if (containerNode.dataset.dragListenersAttached === "true") return;
+            containerNode.dataset.dragListenersAttached = "true";
+
+            // High-performance RAF throttle state
+            let isDragScheduled = false;
+
+            // Dragover handler using RequestAnimationFrame to eliminate lag & cursor glitches
+            containerNode.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (isDragScheduled) return;
+                isDragScheduled = true;
+
+                const clientY = e.clientY;
+
+                requestAnimationFrame(() => {
+                    isDragScheduled = false;
+
                     const draggingCard = document.querySelector('.lifeos-card.dragging');
                     if (!draggingCard) return;
 
-                    const afterElement = this.getDragAfterElement(containerNode, e.clientY);
+                    const afterElement = this.getDragAfterElement(containerNode, clientY);
+                    
                     if (afterElement == null) {
-                        containerNode.appendChild(draggingCard);
+                        if (containerNode.lastElementChild !== draggingCard) {
+                            containerNode.appendChild(draggingCard);
+                        }
                     } else {
-                        containerNode.insertBefore(draggingCard, afterElement);
+                        if (afterElement.previousElementSibling !== draggingCard) {
+                            containerNode.insertBefore(draggingCard, afterElement);
+                        }
                     }
                 });
+            });
 
-                // Drop handler to commit column container & internal vertical sequence
-                containerNode.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const cardId = e.dataTransfer.getData('text/plain');
-                    const card = state.cards.find(c => c.id === cardId);
-                    if (card) {
-                        card.container = `taskly-${col}`;
-                        
-                        // Re-index card array sequence based on current vertical DOM order
-                        const reorderedIds = Array.from(containerNode.querySelectorAll('.lifeos-card'))
-                                                  .map(el => el.getAttribute('data-id'));
-                        
-                        state.cards.sort((a, b) => {
-                            const indexA = reorderedIds.indexOf(a.id);
-                            const indexB = reorderedIds.indexOf(b.id);
-                            if (indexA === -1 || indexB === -1) return 0;
-                            return indexA - indexB;
-                        });
+            // Drop handler to commit column container & internal vertical sequence
+            containerNode.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const cardId = e.dataTransfer.getData('text/plain');
+                const card = state.cards.find(c => c.id === cardId);
+                
+                if (card) {
+                    card.container = `taskly-${col}`;
+                    
+                    // Re-index card array sequence based on current vertical DOM order
+                    const reorderedIds = Array.from(containerNode.querySelectorAll('.lifeos-card'))
+                                              .map(el => el.getAttribute('data-id'));
+                    
+                    state.cards.sort((a, b) => {
+                        const indexA = reorderedIds.indexOf(a.id);
+                        const indexB = reorderedIds.indexOf(b.id);
+                        if (indexA === -1 || indexB === -1) return 0;
+                        return indexA - indexB;
+                    });
 
-                        saveState();
-                    }
-                });
-            }
+                    saveState();
+                }
+            });
         });
     },
 
