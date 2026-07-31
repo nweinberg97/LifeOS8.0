@@ -97,58 +97,58 @@
         </section>
 
 <!-- ----------------------------------------------------------------------
-   HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW
-   ---------------------------------------------------------------------- -->
+HTML-ZONE-3B: TASKLY KANBAN MODULE VIEW (Updated for Inline Creation)
+---------------------------------------------------------------------- -->
 <section class="view" id="view-taskly">
-    <div class="view-header">
-        <h2>Taskly</h2>
-    </div>
-    <div class="kanban-board">
-        <!-- 1. To Do -->
-        <div class="kanban-col">
-            <div class="col-header-wrapper">
-                <span class="col-title">To Do</span>
-                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-todo')" title="Add Task">+</button>
-            </div>
-            <div class="col-body dropzone" data-container="taskly-todo"></div>
-        </div>
+<div class="view-header">
+<h2>Taskly</h2>
+</div>
+<div class="kanban-board">
+<!-- 1. To Do -->
+<div class="kanban-col">
+<div class="col-header-wrapper">
+<span class="col-title">To Do</span>
+<button class="add-task-circle-btn" onclick="lifecycle.createInlineCard('taskly', 'taskly-todo')" title="Add Task">+</button>
+</div>
+<div class="col-body dropzone" data-container="taskly-todo"></div>
+</div>
 
-        <!-- 2. In Progress -->
-        <div class="kanban-col">
-            <div class="col-header-wrapper">
-                <span class="col-title">In Progress</span>
-                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-inprogress')" title="Add Task">+</button>
-            </div>
-            <div class="col-body dropzone" data-container="taskly-inprogress"></div>
-        </div>
+<!-- 2. In Progress -->
+<div class="kanban-col">
+<div class="col-header-wrapper">
+<span class="col-title">In Progress</span>
+<button class="add-task-circle-btn" onclick="lifecycle.createInlineCard('taskly', 'taskly-inprogress')" title="Add Task">+</button>
+</div>
+<div class="col-body dropzone" data-container="taskly-inprogress"></div>
+</div>
 
-        <!-- 3. Review -->
-        <div class="kanban-col">
-            <div class="col-header-wrapper">
-                <span class="col-title">Review</span>
-                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-review')" title="Add Task">+</button>
-            </div>
-            <div class="col-body dropzone" data-container="taskly-review"></div>
-        </div>
+<!-- 3. Review -->
+<div class="kanban-col">
+<div class="col-header-wrapper">
+<span class="col-title">Review</span>
+<button class="add-task-circle-btn" onclick="lifecycle.createInlineCard('taskly', 'taskly-review')" title="Add Task">+</button>
+</div>
+<div class="col-body dropzone" data-container="taskly-review"></div>
+</div>
 
-        <!-- 4. Completed -->
-        <div class="kanban-col">
-            <div class="col-header-wrapper">
-                <span class="col-title">Completed</span>
-                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-completed')" title="Add Task">+</button>
-            </div>
-            <div class="col-body dropzone" data-container="taskly-completed"></div>
-        </div>
+<!-- 4. Completed -->
+<div class="kanban-col">
+<div class="col-header-wrapper">
+<span class="col-title">Completed</span>
+<button class="add-task-circle-btn" onclick="lifecycle.createInlineCard('taskly', 'taskly-completed')" title="Add Task">+</button>
+</div>
+<div class="col-body dropzone" data-container="taskly-completed"></div>
+</div>
 
-        <!-- 5. Backlog -->
-        <div class="kanban-col">
-            <div class="col-header-wrapper">
-                <span class="col-title">Backlog</span>
-                <button class="add-task-circle-btn" onclick="lifecycle.promptCreateCard('taskly', 'taskly-backlog')" title="Add Task">+</button>
-            </div>
-            <div class="col-body dropzone" data-container="taskly-backlog"></div>
-        </div>
-    </div>
+<!-- 5. Backlog -->
+<div class="kanban-col">
+<div class="col-header-wrapper">
+<span class="col-title">Backlog</span>
+<button class="add-task-circle-btn" onclick="lifecycle.createInlineCard('taskly', 'taskly-backlog')" title="Add Task">+</button>
+</div>
+<div class="col-body dropzone" data-container="taskly-backlog"></div>
+</div>
+</div>
 </section>
         
         <!-- ----------------------------------------------------------------------
