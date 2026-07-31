@@ -398,7 +398,7 @@ const lifecycle = {
     },
 // ==========================================================================
 // JS-ZONE-6: CARD FACTORY & ENTITY SCHEMA CONSTRUCTORS
-// Purpose: Prompts user input and builds standardized card entities mapped to target tools.
+// Purpose: Handles modal prompts and zero-friction inline card instantiation.
 // ==========================================================================
     promptCreateCard(tool, initialContainer, forceType = 'task') {
         const title = prompt(`Enter ${forceType} title text:`);
@@ -417,6 +417,38 @@ const lifecycle = {
 
         state.cards.push(newCard);
         saveState();
+        this.renderAll();
+    },
+
+    createInlineCard(tool, initialContainer, forceType = 'task') {
+        const newCard = {
+            id: 'card_' + Date.now() + Math.random().toString(36).substr(2, 4),
+            type: forceType,
+            title: '', // Empty title to trigger placeholder/immediate typing
+            description: '',
+            tool: tool,
+            container: initialContainer || this.getDefaultContainerForTool(tool),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        // Unshift places the card at the very top of the array so it renders at the top
+        state.cards.unshift(newCard);
+        saveState();
+        this.renderAll();
+
+        // Immediately target the newly rendered card and trigger its inline edit mode
+        setTimeout(() => {
+            const cardElement = document.querySelector(`[data-id="${newCard.id}"]`);
+            if (cardElement) {
+                const titleTextSpan = cardElement.querySelector('.title-text');
+                if (titleTextSpan) {
+                    // Find and invoke the inline edit handler directly on this card element
+                    const event = new MouseEvent('dblclick', { bubbles: true });
+                    cardElement.dispatchEvent(event);
+                }
+            }
+        }, 30);
     },
 
     getDefaultContainerForTool(tool) {
@@ -426,7 +458,6 @@ const lifecycle = {
         if (tool === 'brainly') return 'brainly-notes';
         return 'universal-board';
     },
-
 // ==========================================================================
 // JS-ZONE-7: RENDER PIPELINE ORCHESTRATOR & DOM CARD BUILDER
 // Purpose: Master render execution loop and HTML DOM element instantiation for cards.
@@ -454,7 +485,7 @@ const lifecycle = {
         // 1. Title Element Container
         const titleEl = document.createElement('div');
         titleEl.className = 'card-title';
-        titleEl.innerHTML = `${typeIcon} <span class="title-text">${card.title}</span>`;
+        titleEl.innerHTML = `${typeIcon} <span class="title-text ${card.title === '' ? 'is-empty-placeholder' : ''}">${card.title || 'Type task title...'}</span>`;
         div.appendChild(titleEl);
 
         // 2. Description Preview: Extract 1st non-empty line
@@ -470,19 +501,22 @@ const lifecycle = {
 
         // Expanded Double-Click Zone for Seamless Native Inline Title Editing
         const enableInlineEdit = (e) => {
-            // Prevent triggering inline edit if gear button or interactive elements were clicked
             if (e.target.closest('.card-settings-btn')) return;
             e.stopPropagation();
 
             const textSpan = titleEl.querySelector('.title-text');
             if (!textSpan || textSpan.isContentEditable) return;
 
-            // Temporarily disable dragging while editing text
+            // Clear out the placeholder text style on focus if it's a new empty card
+            if (card.title === '') {
+                textSpan.textContent = '';
+                textSpan.classList.remove('is-empty-placeholder');
+            }
+
             div.setAttribute('draggable', 'false');
             textSpan.contentEditable = "true";
             textSpan.focus();
 
-            // Native Text Selection across title string
             const selection = window.getSelection();
             const range = document.createRange();
             range.selectNodeContents(textSpan);
@@ -496,13 +530,19 @@ const lifecycle = {
                 div.setAttribute('draggable', 'true');
                 const newTitle = textSpan.textContent.trim();
 
-                if (newTitle && newTitle !== card.title) {
+                if (newTitle) {
                     card.title = newTitle;
                     card.updatedAt = new Date().toISOString();
                     saveState();
-                    this.renderAll(); // Refresh DOM to reflect updated state/badges
+                    this.renderAll();
+                } else if (originalTitle === '') {
+                    // If it was a newly created empty card and user clicked away without typing, delete it
+                    state.cards = state.cards.filter(c => c.id !== card.id);
+                    saveState();
+                    this.renderAll();
                 } else {
-                    textSpan.textContent = originalTitle; // Revert if empty or unchanged
+                    textSpan.textContent = originalTitle;
+                    textSpan.classList.add('is-empty-placeholder');
                 }
                 cleanup();
             };
@@ -512,7 +552,14 @@ const lifecycle = {
                     evt.preventDefault();
                     textSpan.blur();
                 } else if (evt.key === 'Escape') {
-                    textSpan.textContent = originalTitle;
+                    if (originalTitle === '') {
+                        state.cards = state.cards.filter(c => c.id !== card.id);
+                        saveState();
+                        this.renderAll();
+                    } else {
+                        textSpan.textContent = originalTitle;
+                        textSpan.classList.add('is-empty-placeholder');
+                    }
                     textSpan.contentEditable = "false";
                     div.setAttribute('draggable', 'true');
                     cleanup();
@@ -528,14 +575,22 @@ const lifecycle = {
             textSpan.addEventListener('keydown', keyHandler);
         };
 
-        // Attach double-click trigger to entire card body for maximum hit-box target
         div.addEventListener('dblclick', enableInlineEdit);
+
+        // If the card was freshly created via inline action, trigger edit mode instantly
+        if (card.title === '') {
+            setTimeout(() => {
+                const textSpan = titleEl.querySelector('.title-text');
+                if (textSpan) {
+                    enableInlineEdit({ target: textSpan, stopPropagation: () => {} });
+                }
+            }, 10);
+        }
 
         // 3. Card Footer: Status Badge + Isolated Settings Gear Button
         const footerEl = document.createElement('div');
         footerEl.className = 'card-footer';
 
-        // Updated Status Tag Logic
         const hasBeenEdited = card.createdAt && card.updatedAt && 
             (new Date(card.updatedAt).getTime() - new Date(card.createdAt).getTime() > 1000);
 
@@ -545,7 +600,6 @@ const lifecycle = {
             updatedTag.textContent = 'Updated';
             footerEl.appendChild(updatedTag);
         } else {
-            // Spacer to keep layout balanced
             const emptySpacer = document.createElement('span');
             footerEl.appendChild(emptySpacer);
         }
@@ -555,11 +609,10 @@ const lifecycle = {
         settingsBtn.title = 'Card Settings & Details';
         settingsBtn.innerHTML = `
             <svg viewBox="0 0 24 24">
-                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/>
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/>
             </svg>
         `;
 
-        // Open modal exclusively via gear button click
         settingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -569,7 +622,6 @@ const lifecycle = {
         footerEl.appendChild(settingsBtn);
         div.appendChild(footerEl);
 
-        // Native Drag Event Listeners
         div.addEventListener('dragstart', (e) => {
             div.classList.add('dragging');
             e.dataTransfer.setData('text/plain', card.id);
@@ -582,6 +634,7 @@ const lifecycle = {
 
         return div;
     },
+    
 // ==========================================================================
 // JS-ZONE-8: MODULE RENDER ENGINES
 // ==========================================================================
