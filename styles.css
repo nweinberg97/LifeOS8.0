@@ -351,7 +351,7 @@ body.home-active .navbar {
 /* ==========================================================================
    CSS-ZONE-9: UNIVERSAL CARD ARCHITECTURE & DRAG STATES
    Purpose: Core styling for all generated cards, uniform vertical layout,
-            frameless inline editing, and smooth drag transitions.
+            frameless inline editing, placeholder states, and smooth drag transitions.
    ========================================================================== */
 .lifeos-card {
     background: var(--bg-white);
@@ -396,7 +396,7 @@ body.home-active .navbar {
 /* Full-width Click & Double-Click Header Surface */
 .card-title {
     font-size: 14px;
-    font-weight: 500; /* Unbolded from 600 for subtle visual hierarchy */
+    font-weight: 500;
     line-height: 1.4;
     color: var(--bg-dark);
     display: block;
@@ -410,7 +410,13 @@ body.home-active .navbar {
     box-sizing: border-box;
 }
 
-/* Frameless Modern Focus State for Double-Click Inline Editing */
+/* Placeholder style for empty new cards */
+.card-title .title-text.is-empty-placeholder {
+    color: #aaaaaa;
+    font-style: italic;
+}
+
+/* Frameless Modern Focus State for Double-Click & Inline Editing */
 .card-title .title-text {
     outline: none;
     border-radius: 4px;
@@ -425,6 +431,8 @@ body.home-active .navbar {
     background-color: rgba(0, 0, 0, 0.04);
     box-shadow: none !important;
     cursor: text;
+    font-style: normal;
+    color: var(--bg-dark);
 }
 
 /* Clean Single-Line Note Preview */
