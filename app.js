@@ -471,7 +471,7 @@ const lifecycle = {
         this.renderUniversalBoard();
     },
 
-    createCardDOM(card) {
+   createCardDOM(card) {
         const div = document.createElement('div');
         div.className = 'lifeos-card';
         div.setAttribute('draggable', 'true');
@@ -479,13 +479,13 @@ const lifecycle = {
         
         let typeIcon = "📄";
         if (card.type === 'goal') typeIcon = "🎯";
-        if (card.type === 'task') typeIcon = "✅";
+        if (card.type === 'task') typeIcon = (card.container && card.container.startsWith('taskly')) ? "" : "✅";
         if (card.type === 'note') typeIcon = "📝";
 
         // 1. Title Element Container
         const titleEl = document.createElement('div');
         titleEl.className = 'card-title';
-        titleEl.innerHTML = `${typeIcon} <span class="title-text ${card.title === '' ? 'is-empty-placeholder' : ''}">${card.title || 'Type task title...'}</span>`;
+        titleEl.innerHTML = `${typeIcon ? typeIcon + ' ' : ''}<span class="title-text ${card.title === '' ? 'is-empty-placeholder' : ''}">${card.title || 'Type task title...'}</span>`;
         div.appendChild(titleEl);
 
         // 2. Description Preview: Extract 1st non-empty line
