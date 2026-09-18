@@ -5,7 +5,7 @@
 ---
 
 ### ⚠️ Project Status & Context
-*Note: This repository represents an ongoing, iterative product design and engineering experiment. If you notice parallel repositories or multiple versions on my profile, it is because I was actively experimenting with different component structures and refactoring iterations. The project is currently on a temporary pause, but serves as an exploration into local-first software architecture.*
+*Note: This repository represents an ongoing, iterative product design and engineering experiment. If you notice multiple versions on my profile, it is because I was actively experimenting with different component structures and refactoring iterations. The project is currently on a temporary pause, but serves as an exploration into local-first software architecture.*
 
 ---
 
